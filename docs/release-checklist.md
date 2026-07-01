@@ -16,6 +16,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 ## Documentation
 
 - [x] README finalized for v0.1.0
+- [x] Product direction documented for Slice 13 dashboard-first follow-up
 - [x] Disclaimer complete
 - [x] Security and privacy notes complete
 - [x] Architecture notes complete

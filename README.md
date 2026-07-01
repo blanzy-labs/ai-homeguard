@@ -237,6 +237,7 @@ docker compose down
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Product Direction](docs/product-direction.md)
 - [Local Install](docs/local-install.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Release Checklist](docs/release-checklist.md)

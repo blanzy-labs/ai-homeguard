@@ -114,6 +114,14 @@ report source -> ReportReviewPanel -> user-triggered Markdown/JSON export
 
 The report review flow keeps technical evidence collapsed by default, shows safety notes and limitations near export, and provides Start Over and Clear Current Report actions. These actions clear in-memory report/form state only; they do not delete files, call cleanup commands, reset the versioned safety acknowledgement, or change local settings.
 
+## Dashboard-First Follow-Up Direction
+
+Manual review after Slice 12A identified dashboard-first UX as a Slice 13 product direction. Non-technical home users should not need to understand or choose between technical modules before getting value. The preferred primary path is a simple `Run HomeGuard Check` or `Full HomeGuard Report` flow that presents Demo Mode, Local Device Audit, Questionnaire, Local Network Awareness, and Device Inventory Helper as parts of one product experience.
+
+Future dashboard work should prioritize overall status, top actions, what was checked, what still needs user input, what could not be checked, and simple next steps. Advanced/manual platform checks should remain available but visually de-emphasized. The app should stay local web-based for UI consistency across platforms, while the backend remains responsible for platform-specific checks.
+
+This direction is documented in [Product Direction](product-direction.md). It does not add active scanning or new v0.1.0 product scope.
+
 ## Evidence Source Labels
 
 v0.1.0 normalizes user-facing evidence labels in `frontend/src/components/reportLabels.ts` so the UI does not imply manual or questionnaire findings were automatically detected.
