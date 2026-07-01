@@ -14,6 +14,7 @@ from app.models.evidence import Evidence
 from app.models.finding import Finding
 from app.models.guidance import AttackContext, D3FENDGuidance
 from app.models.report import HomeGuardReport, ReportSummary
+from app.knowledge.guidance_service import enrich_report_guidance
 from app.version import APP_NAME, APP_VERSION
 
 DEMO_GENERATED_AT = datetime(2026, 7, 1, 12, 0, tzinfo=UTC)
@@ -446,7 +447,7 @@ def get_demo_report() -> HomeGuardReport:
         ),
     ]
 
-    return HomeGuardReport(
+    return enrich_report_guidance(HomeGuardReport(
         report_id="demo-homeguard-report-v0-1-slice-2",
         app=APP_NAME,
         version=APP_VERSION,
@@ -486,4 +487,4 @@ def get_demo_report() -> HomeGuardReport:
             "No network scan, packet capture, credential test, exploit, AI call, telemetry, or database is used.",
             "Any ATT&CK context is educational only and does not indicate activity on your device.",
         ],
-    )
+    ))

@@ -23,6 +23,10 @@
 - Combined report local audit requires authorization acknowledgement
 - Markdown export route validates user-triggered report rendering
 - JSON export route validates user-triggered report serialization
+- Guidance catalog route validates local D3FEND-informed catalog output
+- Guidance enrichment validates demo, questionnaire, local, combined, Markdown, and JSON report paths
+- No live MITRE/D3FEND remote fetch included
+- No certification, guarantee, or full-coverage guidance claims included
 - No report auto-save or backend persistence included
 - Docker limitation note appears when container runtime is detected
 - Windows local check route validates unsupported-platform behavior on macOS/Linux

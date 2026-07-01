@@ -20,6 +20,7 @@ from app.models.questionnaire import (
     answer_value_as_text,
 )
 from app.models.report import HomeGuardReport, ReportSummary
+from app.knowledge.guidance_service import enrich_finding_guidance, enrich_report_guidance
 from app.version import APP_NAME, APP_VERSION
 
 QUESTIONNAIRE_DISCLAIMER = (
@@ -468,7 +469,7 @@ def build_questionnaire_findings(submission: QuestionnaireSubmission) -> list[Fi
         ),
         _unsupported_devices_finding(answer("old_unsupported_devices")),
     ]
-    return [finding for finding in maybe_findings if finding is not None]
+    return [enrich_finding_guidance(finding) for finding in maybe_findings if finding is not None]
 
 
 def evaluate_questionnaire(submission: QuestionnaireSubmission) -> QuestionnaireResult:
@@ -513,7 +514,7 @@ def _summary_from_findings(findings: list[Finding], top_actions: list[str]) -> R
 def build_questionnaire_report(submission: QuestionnaireSubmission) -> HomeGuardReport:
     result = evaluate_questionnaire(submission)
     generated_at = submission.generated_at or datetime.now(UTC)
-    return HomeGuardReport(
+    return enrich_report_guidance(HomeGuardReport(
         report_id=f"questionnaire-homeguard-report-{generated_at.strftime('%Y%m%d%H%M%S')}",
         app=APP_NAME,
         version=APP_VERSION,
@@ -534,7 +535,7 @@ def build_questionnaire_report(submission: QuestionnaireSubmission) -> HomeGuard
             "Questionnaire answers are not written to disk or sent to an external service.",
             "Do not enter passwords, credentials, addresses, or personal identifiers into questionnaire fields.",
         ],
-    )
+    ))
 
 
 def get_demo_answers() -> QuestionnaireSubmission:

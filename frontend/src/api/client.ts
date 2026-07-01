@@ -31,6 +31,7 @@ export type Evidence = {
 };
 
 export type D3FENDGuidance = {
+  guidance_id?: string | null;
   category: "harden" | "detect" | "isolate" | "recover" | "educate" | "out_of_scope";
   defensive_concept: string;
   home_action: string;
@@ -38,6 +39,8 @@ export type D3FENDGuidance = {
   rationale: string;
   difficulty: Difficulty;
   estimated_time_minutes?: number | null;
+  requires_admin: boolean;
+  educational_only: boolean;
 };
 
 export type AttackContext = {
@@ -166,6 +169,29 @@ export type CombinedReportResponse = {
   limitations: string[];
 };
 
+export type D3FENDCatalogEntry = {
+  guidance_id: string;
+  category: D3FENDGuidance["category"];
+  defensive_concept: string;
+  home_action: string;
+  technical_action?: string | null;
+  rationale: string;
+  difficulty: Difficulty;
+  estimated_time_minutes: number;
+  applies_to_categories: string[];
+  applies_to_platforms: string[];
+  requires_admin: boolean;
+  educational_only: boolean;
+};
+
+export type D3FENDCatalogResponse = {
+  version: string;
+  source_note: string;
+  disclaimer: string;
+  remote_fetch_performed: boolean;
+  guidance: D3FENDCatalogEntry[];
+};
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -190,6 +216,10 @@ export async function getDemoReport(): Promise<HomeGuardReport> {
 
 export async function getQuestionnaire(): Promise<QuestionnaireSection[]> {
   return getJson<QuestionnaireSection[]>("/questionnaire");
+}
+
+export async function getD3FENDGuidanceCatalog(): Promise<D3FENDCatalogResponse> {
+  return getJson<D3FENDCatalogResponse>("/knowledge/d3fend-guidance");
 }
 
 export async function evaluateQuestionnaire(

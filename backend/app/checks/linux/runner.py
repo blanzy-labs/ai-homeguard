@@ -13,6 +13,7 @@ from app.models.enums import Category, Confidence, D3FENDGuidanceCategory, Diffi
 from app.models.evidence import Evidence
 from app.models.finding import Finding
 from app.models.report import HomeGuardReport, ReportSummary
+from app.knowledge.guidance_service import enrich_report_guidance
 from app.version import APP_NAME, APP_VERSION
 
 LINUX_LOCAL_AUDIT_DISCLAIMER = (
@@ -45,7 +46,7 @@ def run_linux_local_audit(
             check_linux_disk_encryption(context),
         ]
 
-    return HomeGuardReport(
+    return enrich_report_guidance(HomeGuardReport(
         report_id=f"linux-local-audit-{report_time.strftime('%Y%m%d%H%M%S')}",
         app=APP_NAME,
         version=APP_VERSION,
@@ -65,7 +66,7 @@ def run_linux_local_audit(
             "No external upload or AI provider call was performed.",
             "On non-Linux platforms, Linux checks return an unsupported-platform report.",
         ],
-    )
+    ))
 
 
 def run_linux_check_findings() -> list[Finding]:

@@ -4,6 +4,7 @@ import {
   exportMarkdownReport,
   getDemoReport,
   getCombinedReport,
+  getD3FENDGuidanceCatalog,
   getLocalDeviceReport,
   getLinuxLocalReport,
   getMacOSLocalReport,
@@ -13,12 +14,14 @@ import {
   getWindowsLocalReport,
   type HomeGuardReport,
   type CombinedReportResponse,
+  type D3FENDCatalogResponse,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
   type RuntimeContext,
 } from "./api/client";
 import { CombinedReportPanel } from "./components/CombinedReportPanel";
 import { DemoDashboard } from "./components/DemoDashboard";
+import { GuidanceCatalogPanel } from "./components/GuidanceCatalogPanel";
 import { LocalAuditPanel } from "./components/LocalAuditPanel";
 import { ModeCard } from "./components/ModeCard";
 import { QuestionnaireResults } from "./components/QuestionnaireResults";
@@ -34,6 +37,7 @@ type FlowStep =
   | "full-questionnaire"
   | "full-options"
   | "combined-results"
+  | "guidance"
   | "demo"
   | "local"
   | "windows"
@@ -64,6 +68,12 @@ type RuntimeState =
   | { state: "ready"; context: RuntimeContext }
   | { state: "error"; message: string };
 
+type GuidanceCatalogState =
+  | { state: "idle" }
+  | { state: "loading" }
+  | { state: "ready"; catalog: D3FENDCatalogResponse }
+  | { state: "error"; message: string };
+
 const dockerRuntimeNote =
   "If running in Docker, results may reflect the container rather than the host computer.";
 
@@ -80,6 +90,7 @@ export default function App() {
   const [includeLocalInCombined, setIncludeLocalInCombined] = useState(false);
   const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [guidanceCatalog, setGuidanceCatalog] = useState<GuidanceCatalogState>({ state: "idle" });
   const [localReport, setLocalReport] = useState<ReportState>({ state: "idle" });
   const [runtimeContext, setRuntimeContext] = useState<RuntimeState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
@@ -168,6 +179,23 @@ export default function App() {
       setRuntimeContext({
         state: "error",
         message: error instanceof Error ? error.message : "Runtime context unavailable",
+      });
+    }
+  }
+
+  async function openGuidanceCatalog() {
+    setFlowStep("guidance");
+    if (guidanceCatalog.state === "ready" || guidanceCatalog.state === "loading") {
+      return;
+    }
+    setGuidanceCatalog({ state: "loading" });
+    try {
+      const catalog = await getD3FENDGuidanceCatalog();
+      setGuidanceCatalog({ state: "ready", catalog });
+    } catch (error) {
+      setGuidanceCatalog({
+        state: "error",
+        message: error instanceof Error ? error.message : "Guidance catalog unavailable",
       });
     }
   }
@@ -325,8 +353,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 7 combines questionnaire and optional
-          read-only local device findings into one exportable report.
+          A defensive home cyber hygiene helper. Slice 8 adds local D3FEND-informed guidance to
+          questionnaire, local device, combined, and exportable reports.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -456,6 +484,12 @@ export default function App() {
               onSelect={openQuestionnaire}
             />
             <ModeCard
+              title="Defensive Guidance Catalog"
+              status="Available"
+              description="Review the local D3FEND-informed educational guidance used in reports."
+              onSelect={openGuidanceCatalog}
+            />
+            <ModeCard
               title="Demo Mode"
               status="Available"
               description="Review static sample findings from Slice 2."
@@ -463,6 +497,29 @@ export default function App() {
             />
           </div>
         </section>
+      )}
+
+      {flowStep === "guidance" && guidanceCatalog.state === "loading" && (
+        <section className="loading-panel">
+          <p className="section-kicker">Defensive guidance</p>
+          <h2>Loading local catalog</h2>
+          <p className="muted">Reading the bundled D3FEND-informed guidance catalog.</p>
+        </section>
+      )}
+
+      {flowStep === "guidance" && guidanceCatalog.state === "error" && (
+        <section className="loading-panel loading-panel--error">
+          <p className="section-kicker">Defensive guidance</p>
+          <h2>Guidance catalog unavailable</h2>
+          <p>{guidanceCatalog.message}</p>
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </section>
+      )}
+
+      {flowStep === "guidance" && guidanceCatalog.state === "ready" && (
+        <GuidanceCatalogPanel catalog={guidanceCatalog.catalog} onBackToModes={() => setFlowStep("mode")} />
       )}
 
       {flowStep === "questionnaire" && questionnaire.state === "loading" && (

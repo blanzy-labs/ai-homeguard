@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 7 - Combined HomeGuard Report and Export Foundation.
+Current slice: Slice 8 - D3FEND Knowledge Layer and Defensive Guidance Refinement.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,12 +16,12 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 7 does not include:
+Slice 8 does not include:
 
 - Network scanning
 - Nmap integration
 - OpenAI or other AI provider calls
-- Live D3FEND mapping logic
+- Live MITRE/D3FEND data fetching at runtime
 - Telemetry, login, cloud storage, or database persistence
 - Remediation or settings changes
 - sudo or administrator escalation
@@ -35,7 +35,7 @@ The unified local device audit auto-detects the runtime platform and calls the m
 
 The combined report can merge questionnaire-derived findings with optional read-only local device audit findings. Exports are user-triggered only and are not saved automatically or uploaded.
 
-The demo dashboard uses fake sample findings only. D3FEND-informed guidance is currently static demo content, and optional ATT&CK context is educational only.
+The demo dashboard uses fake sample findings only. D3FEND-informed guidance comes from a small local curated educational catalog and explicit finding guidance. It is not official D3FEND coverage, certification, or a guarantee of security. Optional ATT&CK context is educational only.
 
 See [docs/disclaimer.md](docs/disclaimer.md) and [docs/security-and-privacy.md](docs/security-and-privacy.md).
 
@@ -158,6 +158,22 @@ Exports:
 - Are not uploaded to any external service
 - May include questionnaire answers and local audit evidence, so review before sharing
 
+## Defensive Guidance API
+
+Slice 8 adds a local deterministic D3FEND-informed guidance layer:
+
+```bash
+curl http://localhost:8000/knowledge/d3fend-guidance
+curl http://localhost:8000/knowledge/d3fend-guidance/enable_host_firewall
+```
+
+Routes:
+
+- `GET /knowledge/d3fend-guidance`
+- `GET /knowledge/d3fend-guidance/{guidance_id}`
+
+The catalog is bundled with the app and is used to enrich demo, questionnaire, local device, combined, Markdown, and JSON reports. It does not fetch live MITRE data, call an AI provider, upload data, persist reports, or claim complete D3FEND coverage.
+
 ## Local Install
 
 Prerequisites:
@@ -208,6 +224,7 @@ Expected URLs:
 - Questionnaire: http://localhost:8000/questionnaire
 - Local device report: http://localhost:8000/reports/local-device
 - Runtime context: http://localhost:8000/runtime
+- Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
@@ -238,6 +255,7 @@ curl http://localhost:8000/version
 curl http://localhost:8000/questionnaire
 curl http://localhost:8000/demo/report
 curl http://localhost:8000/runtime
+curl http://localhost:8000/knowledge/d3fend-guidance
 curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/reports/windows-local
 curl http://localhost:8000/reports/macos-local
@@ -262,6 +280,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Slice 5 Validation](docs/validation/slice-5-validation.md)
 - [Slice 6 Validation](docs/validation/slice-6-validation.md)
 - [Slice 7 Validation](docs/validation/slice-7-validation.md)
+- [Slice 8 Validation](docs/validation/slice-8-validation.md)
 
 ## License
 

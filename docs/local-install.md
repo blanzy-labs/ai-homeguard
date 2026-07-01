@@ -58,6 +58,7 @@ Expected URLs:
 - Health: http://localhost:8000/health
 - Version: http://localhost:8000/version
 - Runtime context: http://localhost:8000/runtime
+- Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
 - Local device report: http://localhost:8000/reports/local-device
 - Combined report: http://localhost:8000/reports/combined
 - Markdown export: http://localhost:8000/reports/export/markdown

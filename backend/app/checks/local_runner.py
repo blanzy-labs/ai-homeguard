@@ -19,6 +19,7 @@ from app.models.finding import Finding
 from app.models.guidance import D3FENDGuidance
 from app.models.report import HomeGuardReport
 from app.models.runtime import RuntimeContext, RuntimeEnvironment
+from app.knowledge.guidance_service import enrich_report_guidance
 from app.reports.merge import summary_from_findings
 from app.version import APP_NAME, APP_VERSION
 
@@ -54,7 +55,7 @@ def run_local_device_audit(
 
     safety_notes = _enhanced_safety_notes(report.safety_notes, context)
 
-    return report.model_copy(
+    return enrich_report_guidance(report.model_copy(
         update={
             "report_id": f"local-device-audit-{report_time.strftime('%Y%m%d%H%M%S')}",
             "summary": summary_from_findings(report.findings),
@@ -62,7 +63,7 @@ def run_local_device_audit(
             "safety_notes": safety_notes,
             "runtime_context": context,
         }
-    )
+    ))
 
 
 def _unknown_platform_report(context: RuntimeContext, report_time: datetime) -> HomeGuardReport:
@@ -110,7 +111,7 @@ def _unknown_platform_report(context: RuntimeContext, report_time: datetime) -> 
         tags=["local-device", "unsupported-platform"],
     )
 
-    return HomeGuardReport(
+    return enrich_report_guidance(HomeGuardReport(
         report_id=f"local-device-audit-{report_time.strftime('%Y%m%d%H%M%S')}",
         app=APP_NAME,
         version=APP_VERSION,
@@ -122,7 +123,7 @@ def _unknown_platform_report(context: RuntimeContext, report_time: datetime) -> 
         disclaimer=LOCAL_DEVICE_AUDIT_DISCLAIMER,
         safety_notes=[],
         runtime_context=context,
-    )
+    ))
 
 
 def _enhanced_safety_notes(existing_notes: list[str], context: RuntimeContext) -> list[str]:

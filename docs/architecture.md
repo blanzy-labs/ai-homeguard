@@ -2,7 +2,7 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 7 Components
+## Current Slice 8 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
@@ -11,11 +11,12 @@ AI HomeGuard uses a simple local-first web app structure.
 - Windows, macOS, and Linux local checks: read-only platform-guarded check modules and report aggregators
 - Unified local device audit: runtime context, auto-detection, and dispatch to one matching platform runner
 - Combined report and export layer: report merge service, combined report route, Markdown export, and JSON export
+- Knowledge layer: local D3FEND-informed guidance catalog, enrichment service, and knowledge API routes
 - Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 7 adds a combined report and export foundation on top of the questionnaire and local audit foundations. It does not include new deep checks, network discovery, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
+Slice 8 adds a deterministic local D3FEND-informed knowledge layer on top of the combined report and export foundation. It does not include new deep checks, network discovery, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
 
 ## Finding and Report Model
 
@@ -25,6 +26,7 @@ Findings are designed to support both home-user explanations and technical evide
 - Plain-English title, summary, impact explanation, and recommended action
 - Evidence entries with source, method, observed value, expected value, and notes
 - D3FEND-informed defensive guidance with home action, rationale, difficulty, and estimated time
+- Optional catalog metadata such as guidance ID, likely admin requirement, and educational-only flag
 - Optional ATT&CK context marked educational only
 
 Reports wrap findings with a summary, top actions, platform scope, disclaimer, safety notes, and optional privacy-safe runtime context.
@@ -72,15 +74,40 @@ frontend -> POST /reports/export/markdown or /reports/export/json when user clic
 
 The combined route works in memory only. It does not persist questionnaire answers, local audit results, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement.
 
-The merge service in `backend/app/reports/merge.py` preserves findings, D3FEND guidance, and educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
+The merge service in `backend/app/reports/merge.py` preserves findings, enriches D3FEND-informed guidance, preserves educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
 
 The export layer:
 
 - `backend/app/reports/markdown.py`: renders a calm Markdown report for user-triggered download
 - `backend/app/reports/json_export.py`: validates and returns a serializable report dictionary
+- Both export paths enrich guidance in memory before rendering/serialization
 - Does not write files to disk, call external services, or upload data
 
-Future slices may add richer D3FEND knowledge and, later, AI-assisted summaries generated from the same report model after explicit user consent.
+Later slices may add AI-assisted summaries generated from the same report model after explicit user consent.
+
+## D3FEND-Informed Knowledge Layer
+
+```text
+finding -> guidance_service -> enriched finding -> report/export/frontend
+frontend -> GET /knowledge/d3fend-guidance -> local curated catalog
+```
+
+Slice 8 stores a small curated local catalog in `backend/app/knowledge/d3fend_catalog.py`. The catalog is bundled with the app and contains educational defensive concepts such as host firewall, remote access review, strong authentication, full-disk encryption, endpoint protection, update hygiene, asset identification, isolation, backup, least privilege, router hardening, and local service exposure review.
+
+The enrichment service in `backend/app/knowledge/guidance_service.py`:
+
+- Preserves explicit guidance already attached to findings
+- Adds catalog guidance when a finding has matching guidance IDs or tags
+- Infers guidance from category/platform only when a finding lacks guidance
+- Avoids duplicate guidance entries
+- Keeps output deterministic and in memory
+
+Knowledge API routes:
+
+- `GET /knowledge/d3fend-guidance`: returns the local curated catalog plus version/source/disclaimer metadata
+- `GET /knowledge/d3fend-guidance/{guidance_id}`: returns one catalog entry
+
+The catalog is D3FEND-informed educational guidance, not official certification, not full D3FEND coverage, and not a guarantee of security. No live MITRE data, remote catalog data, or AI provider is fetched at runtime. A future slice may consider full ontology ingestion, but that is outside v0.1.0.
 
 ## Platform Check Architecture
 
@@ -93,6 +120,8 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/reports/merge.py`: combined report merge and summary helper
 - `backend/app/reports/markdown.py`: Markdown report renderer
 - `backend/app/reports/json_export.py`: JSON export helper
+- `backend/app/knowledge/d3fend_catalog.py`: local curated defensive guidance catalog
+- `backend/app/knowledge/guidance_service.py`: deterministic guidance lookup and enrichment
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers
@@ -162,12 +191,12 @@ The ClamAV check never scans files. The disk encryption check reports `unable_to
 
 ## Mocked Test Strategy
 
-Development currently happens on a Mac Mini. Windows and Linux behavior is validated with fake command results and monkeypatched platform detection. macOS mapping is also covered by mocked outputs so tests do not depend on the developer machine's exact settings. Unified local audit tests monkeypatch runtime context and platform runners to verify dispatch without running real platform commands. Tests verify unsupported behavior, mocked output mapping, D3FEND guidance presence, command safety, and privacy-safe summaries without requiring Windows, Linux host access, real PowerShell, sudo, package updates, or file scans.
+Development currently happens on a Mac Mini. Windows and Linux behavior is validated with fake command results and monkeypatched platform detection. macOS mapping is also covered by mocked outputs so tests do not depend on the developer machine's exact settings. Unified local audit tests monkeypatch runtime context and platform runners to verify dispatch without running real platform commands. Tests verify unsupported behavior, mocked output mapping, D3FEND-informed guidance presence, catalog integrity, knowledge routes, command safety, and privacy-safe summaries without requiring Windows, Linux host access, real PowerShell, sudo, package updates, remote MITRE fetches, AI calls, or file scans.
 
 ## Planned Modules
 
 - `checks`: safe local checks for future audit slices
-- `knowledge/D3FEND`: D3FEND-informed defensive guidance references
+- `knowledge`: D3FEND-informed defensive guidance references and future catalog ingestion experiments
 - `reports`: plain-English local report generation and future report merging
 - `questionnaire`: beginner-friendly user inputs and context
 - `platform adapters`: future router and network-aware implementations

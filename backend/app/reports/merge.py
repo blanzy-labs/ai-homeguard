@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from app.models.enums import FindingStatus, ReportMode
 from app.models.finding import Finding
 from app.models.report import HomeGuardReport, ReportSummary
+from app.knowledge.guidance_service import enrich_finding_guidance
 from app.version import APP_NAME, APP_VERSION
 
 COMBINED_REPORT_DISCLAIMER = (
@@ -21,7 +22,10 @@ def merge_homeguard_reports(
     reports: list[HomeGuardReport],
     mode: str = "combined",
 ) -> HomeGuardReport:
-    findings = _dedupe_findings(finding for report in reports for finding in report.findings)
+    findings = [
+        enrich_finding_guidance(finding)
+        for finding in _dedupe_findings(finding for report in reports for finding in report.findings)
+    ]
     generated_at = reports[0].generated_at if reports else datetime.now(UTC)
     safety_notes = _unique(note for report in reports for note in report.safety_notes)
     platform_scope = _unique(finding.platform for finding in findings)

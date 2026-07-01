@@ -404,6 +404,38 @@ h3 {
   color: #8d2f2f;
 }
 
+.guidance-context {
+  color: #506079;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.guidance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.guidance-meta div {
+  display: grid;
+  gap: 2px;
+  min-width: 92px;
+}
+
+.guidance-meta dt {
+  color: #596579;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.guidance-meta dd {
+  margin: 0;
+  color: #31415a;
+  font-weight: 800;
+}
+
 .runtime-summary {
   display: grid;
   gap: 6px;
@@ -551,6 +583,39 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.guidance-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.guidance-catalog-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #d6d9d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.guidance-catalog-card span {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e9f4ef;
+  color: #0d6759;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.guidance-catalog-card p {
+  color: #34445d;
+  line-height: 1.5;
 }
 
 .action-plan ol,

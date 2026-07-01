@@ -4,6 +4,7 @@ from app.models.enums import Confidence, D3FENDGuidanceCategory, Difficulty
 
 
 class D3FENDGuidance(BaseModel):
+    guidance_id: str | None = None
     category: D3FENDGuidanceCategory
     defensive_concept: str = Field(..., min_length=1)
     home_action: str = Field(..., min_length=1)
@@ -11,6 +12,8 @@ class D3FENDGuidance(BaseModel):
     rationale: str = Field(..., min_length=1)
     difficulty: Difficulty
     estimated_time_minutes: int | None = Field(default=None, ge=1)
+    requires_admin: bool = False
+    educational_only: bool = True
 
 
 class AttackContext(BaseModel):

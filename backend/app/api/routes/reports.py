@@ -54,7 +54,7 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
     combined.safety_notes = _combined_safety_notes(combined.safety_notes)
     limitations.extend(
         [
-            "No network audit is included in Slice 7.",
+            "No network audit is included in Slice 8.",
             "Exports are generated only when requested and are not saved automatically.",
         ]
     )

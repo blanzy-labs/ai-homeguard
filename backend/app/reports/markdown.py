@@ -1,8 +1,10 @@
 from app.models.finding import Finding
 from app.models.report import HomeGuardReport
+from app.knowledge.guidance_service import enrich_report_guidance
 
 
 def render_markdown_report(report: HomeGuardReport) -> str:
+    report = enrich_report_guidance(report)
     lines = [
         "# AI HomeGuard Report",
         "",
@@ -42,6 +44,13 @@ def render_markdown_report(report: HomeGuardReport) -> str:
     for finding in report.findings:
         lines.extend(_finding_section(finding))
     lines.extend(["", "## D3FEND-Informed Defensive Guidance", ""])
+    lines.extend(
+        [
+            "These defensive actions are inspired by common defensive concepts and D3FEND-style "
+            "countermeasure thinking. They are educational and do not guarantee complete protection.",
+            "",
+        ]
+    )
     guidance_lines = _guidance_summary(report.findings)
     lines.extend(guidance_lines or ["No D3FEND-informed guidance was included."])
     lines.extend(["", "## Optional ATT&CK Educational Context", ""])
@@ -93,9 +102,14 @@ def _finding_section(finding: Finding) -> list[str]:
         if evidence.notes:
             lines.append(f"  - Notes: {_safe_text(evidence.notes)}")
     if finding.d3fend_guidance:
-        lines.extend(["", "D3FEND guidance:"])
+        lines.extend(["", "D3FEND-informed guidance:"])
         for guidance in finding.d3fend_guidance:
-            lines.append(f"- {guidance.category.value}: {_safe_text(guidance.home_action)}")
+            admin_note = "likely needs admin access" if guidance.requires_admin else "usually no admin access needed"
+            educational_note = "educational mapping" if guidance.educational_only else "defensive guidance"
+            lines.append(
+                f"- {guidance.category.value}: {_safe_text(guidance.home_action)} "
+                f"({educational_note}; {admin_note})"
+            )
     if finding.attack_context:
         lines.extend(["", "ATT&CK educational context:"])
         for context in finding.attack_context:

@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 7 includes:
+Slice 8 includes:
 
 - No telemetry
 - No database
@@ -17,6 +17,7 @@ Slice 7 includes:
 - Unified local device audit that calls only the matching detected platform runner
 - Combined reports from questionnaire findings and optional local device findings
 - User-triggered Markdown and JSON exports
+- Local static D3FEND-informed guidance catalog and enrichment service
 - Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
@@ -40,6 +41,8 @@ The questionnaire endpoints do not upload data to an external service and do not
 Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement.
 
 Markdown and JSON exports are user-triggered. The backend returns export content to the browser or caller; it does not save a copy. Exported reports may contain user-provided questionnaire answers and local audit evidence, so users should review exports before sharing them.
+
+The D3FEND-informed guidance catalog is local and static. AI HomeGuard does not fetch live MITRE data, call an AI provider, send telemetry, persist catalog lookups, or change settings while enriching guidance. Guidance is educational and may be incomplete.
 
 Windows local checks are designed to be read-only. They do not enable or disable Defender, Firewall, BitLocker, Remote Desktop, SMB, services, or Windows Update. They do not attempt remediation and do not require administrator privileges for baseline behavior.
 

@@ -109,6 +109,24 @@ Markdown and JSON exports are created only after clicking an export button. If t
 
 Markdown export renders the `HomeGuardReport` sent to `/reports/export/markdown`. If it has no findings, rebuild the combined report and confirm questionnaire answers or local audit findings were included.
 
+## Guidance Catalog Route Is Unavailable
+
+Confirm the backend is running, then call:
+
+```bash
+curl http://localhost:8000/knowledge/d3fend-guidance
+```
+
+The guidance catalog is bundled locally. It does not need internet access or a live MITRE connection.
+
+## Report Has No Defensive Guidance
+
+If a custom or future finding has no `d3fend_guidance`, check whether its category, platform, or tags match the local catalog. Unknown categories can still render, but they may not receive inferred guidance until a mapping is added.
+
+## Missing Guidance Entry
+
+If `/knowledge/d3fend-guidance/{guidance_id}` returns 404, confirm the ID is one of the bundled catalog IDs returned by `/knowledge/d3fend-guidance`.
+
 ## PowerShell Is Unavailable on Windows
 
 The Windows check foundation uses read-only PowerShell commands for most checks. If PowerShell is unavailable or blocked, affected checks return `unable_to_check` instead of changing settings or requiring remediation.
