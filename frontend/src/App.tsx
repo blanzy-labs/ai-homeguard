@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import {
   getDemoReport,
+  getLocalDeviceReport,
   getLinuxLocalReport,
   getMacOSLocalReport,
   getQuestionnaire,
   getQuestionnaireReport,
+  getRuntimeContext,
   getWindowsLocalReport,
   type HomeGuardReport,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
+  type RuntimeContext,
 } from "./api/client";
 import { DemoDashboard } from "./components/DemoDashboard";
 import { LocalAuditPanel } from "./components/LocalAuditPanel";
@@ -24,6 +27,7 @@ type FlowStep =
   | "questionnaire"
   | "results"
   | "demo"
+  | "local"
   | "windows"
   | "macos"
   | "linux";
@@ -40,6 +44,15 @@ type QuestionnaireState =
   | { state: "ready"; sections: QuestionnaireSection[] }
   | { state: "error"; message: string };
 
+type RuntimeState =
+  | { state: "idle" }
+  | { state: "loading" }
+  | { state: "ready"; context: RuntimeContext }
+  | { state: "error"; message: string };
+
+const dockerRuntimeNote =
+  "If running in Docker, results may reflect the container rather than the host computer.";
+
 export default function App() {
   const [flowStep, setFlowStep] = useState<FlowStep>("welcome");
   const [acknowledged, setAcknowledged] = useState(false);
@@ -47,6 +60,8 @@ export default function App() {
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireState>({ state: "idle" });
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
   const [questionnaireReport, setQuestionnaireReport] = useState<ReportState>({ state: "idle" });
+  const [localReport, setLocalReport] = useState<ReportState>({ state: "idle" });
+  const [runtimeContext, setRuntimeContext] = useState<RuntimeState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
   const [macosReport, setMacosReport] = useState<ReportState>({ state: "idle" });
   const [linuxReport, setLinuxReport] = useState<ReportState>({ state: "idle" });
@@ -99,6 +114,23 @@ export default function App() {
     }
   }
 
+  async function openLocalAudit() {
+    setFlowStep("local");
+    if (runtimeContext.state === "ready" || runtimeContext.state === "loading") {
+      return;
+    }
+    setRuntimeContext({ state: "loading" });
+    try {
+      const context = await getRuntimeContext();
+      setRuntimeContext({ state: "ready", context });
+    } catch (error) {
+      setRuntimeContext({
+        state: "error",
+        message: error instanceof Error ? error.message : "Runtime context unavailable",
+      });
+    }
+  }
+
   async function submitQuestionnaire(submission: QuestionnaireSubmission) {
     setIsSubmittingQuestionnaire(true);
     setQuestionnaireReport({ state: "loading" });
@@ -125,6 +157,22 @@ export default function App() {
       setWindowsReport({
         state: "error",
         message: error instanceof Error ? error.message : "Windows local report unavailable",
+      });
+    }
+  }
+
+  async function runLocalDeviceAudit() {
+    setLocalReport({ state: "loading" });
+    try {
+      const report = await getLocalDeviceReport();
+      setLocalReport({ state: "ready", report });
+      if (report.runtime_context) {
+        setRuntimeContext({ state: "ready", context: report.runtime_context });
+      }
+    } catch (error) {
+      setLocalReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Local device report unavailable",
       });
     }
   }
@@ -167,8 +215,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 5 adds read-only Windows, macOS, and Linux
-          local checks with friendly unsupported-platform reports.
+          A defensive home cyber hygiene helper. Slice 6 adds one auto-detected local device audit
+          that chooses the right read-only checks for this runtime.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -180,7 +228,7 @@ export default function App() {
             <h2 id="welcome-heading">A calm checklist for home security basics</h2>
             <p className="muted">
               AI HomeGuard explains defensive steps in plain language and keeps this slice limited
-              to local read-only checks, demo data, and questionnaire answers.
+              to local read-only checks, runtime context, demo data, and questionnaire answers.
             </p>
           </div>
           <div className="welcome-actions">
@@ -207,8 +255,10 @@ export default function App() {
 
           <ul className="safety-boundary-list">
             <li>Runs locally in your development environment.</li>
-            <li>Uses read-only device checks for Windows, macOS, and Linux.</li>
+            <li>Auto-detects Windows, macOS, Linux, or unsupported runtimes.</li>
+            <li>Uses read-only device checks for the detected runtime.</li>
             <li>Returns an unsupported-platform report when a check cannot run here.</li>
+            <li>If running in Docker, results may reflect the container rather than the host.</li>
             <li>Does not request sudo, administrator escalation, or passwords.</li>
             <li>Does not exploit, attack, brute-force, or packet-sniff.</li>
             <li>Does not scan networks or public targets.</li>
@@ -257,21 +307,27 @@ export default function App() {
           </div>
           <div className="mode-grid">
             <ModeCard
-              title="Windows Device Audit"
+              title="Local Device Audit"
               status="Available"
-              description="Run read-only Windows posture checks, or see a safe unsupported-platform result here."
+              description="AI HomeGuard will choose the right local checks for this runtime."
+              onSelect={openLocalAudit}
+            />
+            <ModeCard
+              title="Windows Device Audit"
+              status="Advanced/manual"
+              description="Manually run Windows posture checks for debugging or platform validation."
               onSelect={() => setFlowStep("windows")}
             />
             <ModeCard
               title="macOS Device Audit"
-              status="Available"
-              description="Run read-only macOS posture checks when the backend is running on a Mac."
+              status="Advanced/manual"
+              description="Manually run macOS posture checks when the backend is running on a Mac."
               onSelect={() => setFlowStep("macos")}
             />
             <ModeCard
               title="Linux Device Audit"
-              status="Available"
-              description="Run read-only Linux posture checks, or see unsupported status on other platforms."
+              status="Advanced/manual"
+              description="Manually run Linux posture checks, including container visibility in Docker."
               onSelect={() => setFlowStep("linux")}
             />
             <ModeCard
@@ -366,6 +422,33 @@ export default function App() {
         </>
       )}
 
+      {flowStep === "local" && (
+        <>
+          <LocalAuditPanel
+            platformName="Local Device"
+            panelKicker="Local Device Audit"
+            heading="Auto-detected local device checks"
+            description="AI HomeGuard will choose the right local checks for this runtime. Read-only checks only; no settings are changed, no network scan is run, and no data is uploaded."
+            runLabel="Run Local Device Audit"
+            loadingLabel="Running Local Device Audit"
+            findingsHeading="Local Device Findings"
+            unsupportedTitle="Local device checks are unavailable here"
+            unsupportedBody="AI HomeGuard could not match this runtime to a supported local platform. You are seeing a safe limited-visibility result."
+            runtimeContext={runtimeContext.state === "ready" ? runtimeContext.context : null}
+            runtimeLoading={runtimeContext.state === "loading"}
+            runtimeError={runtimeContext.state === "error" ? runtimeContext.message : null}
+            dockerNote={dockerRuntimeNote}
+            report={localReport.state === "ready" ? localReport.report : null}
+            loading={localReport.state === "loading"}
+            error={localReport.state === "error" ? localReport.message : null}
+            onRun={runLocalDeviceAudit}
+          />
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </>
+      )}
+
       {flowStep === "windows" && (
         <>
           <LocalAuditPanel
@@ -378,6 +461,7 @@ export default function App() {
             findingsHeading="Windows Findings"
             unsupportedTitle="Windows checks are unavailable here"
             unsupportedBody="Windows checks can only run when AI HomeGuard is running on a Windows computer. You are seeing a safe unsupported-platform result."
+            dockerNote={dockerRuntimeNote}
             report={windowsReport.state === "ready" ? windowsReport.report : null}
             loading={windowsReport.state === "loading"}
             error={windowsReport.state === "error" ? windowsReport.message : null}
@@ -401,6 +485,7 @@ export default function App() {
             findingsHeading="macOS Findings"
             unsupportedTitle="macOS checks are unavailable here"
             unsupportedBody="macOS checks can only run when AI HomeGuard is running on a Mac. You are seeing a safe unsupported-platform result."
+            dockerNote={dockerRuntimeNote}
             report={macosReport.state === "ready" ? macosReport.report : null}
             loading={macosReport.state === "loading"}
             error={macosReport.state === "error" ? macosReport.message : null}
@@ -424,6 +509,7 @@ export default function App() {
             findingsHeading="Linux Findings"
             unsupportedTitle="Linux checks are unavailable here"
             unsupportedBody="Linux checks can only run when AI HomeGuard is running on a Linux computer. You are seeing a safe unsupported-platform result."
+            dockerNote={dockerRuntimeNote}
             report={linuxReport.state === "ready" ? linuxReport.report : null}
             loading={linuxReport.state === "loading"}
             error={linuxReport.state === "error" ? linuxReport.message : null}

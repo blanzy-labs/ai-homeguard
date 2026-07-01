@@ -1,4 +1,4 @@
-import type { HomeGuardReport } from "../api/client";
+import type { HomeGuardReport, RuntimeContext } from "../api/client";
 import { FindingCard } from "./FindingCard";
 
 type LocalAuditPanelProps = {
@@ -11,6 +11,10 @@ type LocalAuditPanelProps = {
   findingsHeading: string;
   unsupportedTitle: string;
   unsupportedBody: string;
+  runtimeContext?: RuntimeContext | null;
+  runtimeLoading?: boolean;
+  runtimeError?: string | null;
+  dockerNote?: string;
   report: HomeGuardReport | null;
   loading: boolean;
   error: string | null;
@@ -28,6 +32,10 @@ function isUnsupportedPlatformReport(report: HomeGuardReport) {
   return report.findings.some((finding) => finding.id.includes("unsupported-platform"));
 }
 
+function formatRuntime(context: RuntimeContext) {
+  return `${formatStatus(context.detected_platform)} ${context.runtime_environment}`;
+}
+
 export function LocalAuditPanel({
   platformName,
   panelKicker,
@@ -38,6 +46,10 @@ export function LocalAuditPanel({
   findingsHeading,
   unsupportedTitle,
   unsupportedBody,
+  runtimeContext,
+  runtimeLoading = false,
+  runtimeError = null,
+  dockerNote,
   report,
   loading,
   error,
@@ -58,6 +70,16 @@ export function LocalAuditPanel({
         <span>No data uploaded</span>
       </div>
 
+      {runtimeLoading ? <p className="runtime-note">Checking runtime context</p> : null}
+      {runtimeError ? <p className="runtime-note runtime-note--error">{runtimeError}</p> : null}
+      {runtimeContext ? (
+        <div className="runtime-summary" aria-label="Detected runtime context">
+          <span>Detected runtime</span>
+          <strong>{formatRuntime(runtimeContext)}</strong>
+          {runtimeContext.runtime_environment === "docker" && dockerNote ? <p>{dockerNote}</p> : null}
+        </div>
+      ) : null}
+
       <button className="primary-button" type="button" disabled={loading} onClick={onRun}>
         {loading ? loadingLabel : runLabel}
       </button>
@@ -71,6 +93,14 @@ export function LocalAuditPanel({
 
       {report ? (
         <section className="results-panel" aria-labelledby="local-results-heading">
+          {report.runtime_context && !runtimeContext ? (
+            <div className="runtime-summary" aria-label="Report runtime context">
+              <span>Detected runtime</span>
+              <strong>{formatRuntime(report.runtime_context)}</strong>
+              {report.runtime_context.runtime_environment === "docker" && dockerNote ? <p>{dockerNote}</p> : null}
+            </div>
+          ) : null}
+
           {isUnsupportedPlatformReport(report) ? (
             <div className="unsupported-message">
               <strong>{unsupportedTitle}</strong>

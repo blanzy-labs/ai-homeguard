@@ -57,12 +57,14 @@ Expected URLs:
 - Backend: http://localhost:8000
 - Health: http://localhost:8000/health
 - Version: http://localhost:8000/version
+- Runtime context: http://localhost:8000/runtime
+- Local device report: http://localhost:8000/reports/local-device
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
 - API docs: http://localhost:8000/docs
 
-Docker note: Docker runs the backend inside a Linux container. For true host macOS checks, run the backend directly with uv instead of Docker.
+Docker note: Docker runs the backend inside a Linux container. `/reports/local-device` reflects the backend runtime, so Docker results may describe the container instead of the host. For true host macOS checks, run the backend directly with uv instead of Docker.
 
 Stop Docker services:
 

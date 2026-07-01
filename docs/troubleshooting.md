@@ -65,6 +65,10 @@ Hard-refresh the browser tab, stop and restart the Vite dev server, or clear the
 
 Windows local checks only run when AI HomeGuard is running on a Windows computer. On macOS or Linux, `/reports/windows-local` returns an unsupported-platform report and does not run Windows commands.
 
+## Local Device Audit Picked the Wrong Host
+
+`/reports/local-device` detects the runtime where the backend process runs. If the backend is in Docker on a Mac, it usually detects Linux because the container is Linux. Run the backend directly with `uv run uvicorn app.main:app --reload` for host-level macOS checks.
+
 ## macOS Checks Are Unavailable on Windows or Linux
 
 macOS local checks only run when AI HomeGuard is running directly on macOS. On Windows or Linux, `/reports/macos-local` returns an unsupported-platform report and does not run macOS commands.
@@ -77,13 +81,25 @@ Linux local checks only run when AI HomeGuard is running on Linux. On Windows or
 
 Docker Compose runs the backend inside a Linux container. On a Mac host, `/reports/macos-local` returns unsupported-platform output in Docker, and `/reports/linux-local` checks the container environment rather than the Mac. Run the backend natively with `uv run uvicorn app.main:app --reload` for true host macOS checks.
 
+The `/runtime` route can help confirm what the backend sees. It returns privacy-safe runtime context without the hostname string.
+
+## Manual Platform Routes for Debugging
+
+Use `/reports/local-device` for normal home-user flow. The manual routes remain available for platform validation and debugging:
+
+- `/reports/windows-local`
+- `/reports/macos-local`
+- `/reports/linux-local`
+
+Manual routes return unsupported-platform reports when called from the wrong runtime.
+
 ## PowerShell Is Unavailable on Windows
 
 The Windows check foundation uses read-only PowerShell commands for most checks. If PowerShell is unavailable or blocked, affected checks return `unable_to_check` instead of changing settings or requiring remediation.
 
 ## Permissions or Admin Limitations
 
-Slice 5 does not require administrator privileges for baseline behavior. Some Windows, macOS, or Linux details may have limited visibility without elevated rights. In that case AI HomeGuard reports limited visibility or `unable_to_check` instead of requesting elevation.
+Slice 6 does not require administrator privileges for baseline behavior. Some Windows, macOS, or Linux details may have limited visibility without elevated rights. In that case AI HomeGuard reports limited visibility or `unable_to_check` instead of requesting elevation.
 
 ## Endpoint Security Blocks PowerShell
 

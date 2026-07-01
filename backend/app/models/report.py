@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.models.enums import FindingStatus, Platform, ReportMode
 from app.models.finding import Finding
+from app.models.runtime import RuntimeContext
 
 
 class ReportSummary(BaseModel):
@@ -28,3 +29,4 @@ class HomeGuardReport(BaseModel):
     findings: list[Finding] = Field(default_factory=list)
     disclaimer: str = Field(..., min_length=1)
     safety_notes: list[str] = Field(default_factory=list)
+    runtime_context: RuntimeContext | None = None

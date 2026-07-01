@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 5 - macOS and Linux Local Checks Foundation.
+Current slice: Slice 6 - Unified Local Audit Report and Platform Auto-Detection.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,7 +16,7 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 5 does not include:
+Slice 6 does not include:
 
 - Network scanning
 - Nmap integration
@@ -29,6 +29,8 @@ Slice 5 does not include:
 - Packet capture
 
 Windows, macOS, and Linux checks are read-only and only execute when AI HomeGuard is running on the matching operating system. Unsupported platform routes return an informational report without running commands for the wrong platform.
+
+The unified local device audit auto-detects the runtime platform and calls the matching Windows, macOS, or Linux runner. If the backend is running inside Docker, results may reflect the container environment rather than the host computer.
 
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance is currently static demo content, and optional ATT&CK context is educational only.
 
@@ -62,17 +64,26 @@ These endpoints return static questions, fake demo data, or questionnaire-derive
 
 ## Local Audit APIs
 
-Slice 5 provides platform-specific local audit report endpoints:
+Slice 6 provides one primary auto-detected local device audit endpoint plus platform-specific manual endpoints:
 
 ```bash
+curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/reports/windows-local
 curl http://localhost:8000/reports/macos-local
 curl http://localhost:8000/reports/linux-local
+curl http://localhost:8000/runtime
 ```
 
 Additional route:
 
 - `GET /checks/windows`
+
+Unified route behavior:
+
+- `GET /reports/local-device` detects the runtime platform and calls the matching Windows, macOS, or Linux runner
+- Unknown platforms return a safe `unable_to_check` report without running platform commands
+- Docker/container runtime adds a limitation note that checks may reflect the container rather than the host
+- `GET /runtime` returns privacy-safe runtime context without hostname strings, usernames, personal paths, environment variables, or secrets
 
 Windows check scope:
 
@@ -165,6 +176,8 @@ Expected URLs:
 - Version: http://localhost:8000/version
 - Demo report: http://localhost:8000/demo/report
 - Questionnaire: http://localhost:8000/questionnaire
+- Local device report: http://localhost:8000/reports/local-device
+- Runtime context: http://localhost:8000/runtime
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
@@ -194,13 +207,15 @@ curl http://localhost:8000/health
 curl http://localhost:8000/version
 curl http://localhost:8000/questionnaire
 curl http://localhost:8000/demo/report
+curl http://localhost:8000/runtime
+curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/reports/windows-local
 curl http://localhost:8000/reports/macos-local
 curl http://localhost:8000/reports/linux-local
 docker compose down
 ```
 
-Docker note: the backend runs inside a Linux container. In Docker, `/reports/macos-local` returns unsupported-platform output, and `/reports/linux-local` reflects the container environment rather than the Mac host. Run the backend natively for true host macOS checks.
+Docker note: the backend runs inside a Linux container. In Docker, `/reports/local-device` and `/reports/linux-local` reflect the container environment rather than the Mac host, and `/reports/macos-local` returns unsupported-platform output. Run the backend natively for true host macOS checks.
 
 ## Documentation
 
@@ -215,6 +230,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/mac
 - [Slice 3 Validation](docs/validation/slice-3-validation.md)
 - [Slice 4 Validation](docs/validation/slice-4-validation.md)
 - [Slice 5 Validation](docs/validation/slice-5-validation.md)
+- [Slice 6 Validation](docs/validation/slice-6-validation.md)
 
 ## License
 

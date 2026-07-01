@@ -96,6 +96,16 @@ export type HomeGuardReport = {
   findings: Finding[];
   disclaimer: string;
   safety_notes: string[];
+  runtime_context?: RuntimeContext | null;
+};
+
+export type RuntimeContext = {
+  detected_platform: string;
+  runtime_environment: "native" | "docker" | "unknown";
+  architecture?: string | null;
+  hostname_present: boolean;
+  platform_notes: string[];
+  limitations: string[];
 };
 
 export type QuestionnaireOption = {
@@ -204,4 +214,12 @@ export async function getMacOSLocalReport(): Promise<HomeGuardReport> {
 
 export async function getLinuxLocalReport(): Promise<HomeGuardReport> {
   return getJson<HomeGuardReport>("/reports/linux-local");
+}
+
+export async function getLocalDeviceReport(): Promise<HomeGuardReport> {
+  return getJson<HomeGuardReport>("/reports/local-device");
+}
+
+export async function getRuntimeContext(): Promise<RuntimeContext> {
+  return getJson<RuntimeContext>("/runtime");
 }

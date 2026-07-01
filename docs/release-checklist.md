@@ -17,6 +17,9 @@
 - Questionnaire asks for no secrets, credentials, addresses, or personal identifiers
 - Questionnaire-derived findings use the existing finding/report model
 - Safety acknowledgement is UI-only and not persisted
+- Unified local device audit route validates auto-detection and dispatch behavior
+- Runtime context route avoids hostname strings, usernames, paths, environment variables, and secrets
+- Docker limitation note appears when container runtime is detected
 - Windows local check route validates unsupported-platform behavior on macOS/Linux
 - Windows command runner uses allowlisted read-only commands
 - Windows local check tests use mocked command output and do not require Windows
@@ -28,6 +31,7 @@
 - Linux command runner uses allowlisted read-only commands
 - Linux local check tests use mocked command output and do not require a real Linux host
 - Docker validation documents that Docker sees the Linux container, not the Mac host
+- Manual platform routes remain available as advanced/debug options
 - No sudo/admin escalation commands included
 - No ClamAV file scans included
 - No network scan logic included yet

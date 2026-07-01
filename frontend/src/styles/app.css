@@ -395,6 +395,41 @@ h3 {
   text-transform: uppercase;
 }
 
+.runtime-note {
+  color: #506079;
+  font-weight: 700;
+}
+
+.runtime-note--error {
+  color: #8d2f2f;
+}
+
+.runtime-summary {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid #d6d9d1;
+  border-left: 3px solid #0d6759;
+  border-radius: 8px;
+  background: #f6f7f4;
+}
+
+.runtime-summary span {
+  color: #596579;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.runtime-summary strong {
+  color: #101827;
+}
+
+.runtime-summary p {
+  color: #506079;
+  line-height: 1.5;
+}
+
 .unsupported-message {
   display: grid;
   gap: 8px;

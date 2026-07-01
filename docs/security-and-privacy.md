@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 5 includes:
+Slice 6 includes:
 
 - No telemetry
 - No database
@@ -14,6 +14,8 @@ Slice 5 includes:
 - Read-only Windows local audit commands only when running on Windows
 - Read-only macOS local audit commands only when running on macOS
 - Read-only Linux local audit commands only when running on Linux
+- Unified local device audit that calls only the matching detected platform runner
+- Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
 - No ClamAV file scans
@@ -38,11 +40,15 @@ macOS local checks are designed to be read-only. They read firewall, FileVault, 
 
 Linux local checks are designed to be read-only. They read common firewall, SSH, listening port, ClamAV presence, system info, update visibility, and limited disk encryption signals where available. They do not use sudo, change services, install packages, update packages, scan files, or modify disks.
 
+The unified local device audit auto-detects the runtime platform and dispatches to one matching platform runner. It does not run Windows, macOS, and Linux checks all at once.
+
+Runtime context is intentionally minimal. It may report detected platform, runtime environment, architecture, whether a hostname exists, notes, and limitations. It does not return hostname strings, usernames, personal paths, environment variables, browser history, documents, tokens, passwords, or secrets.
+
 Windows, macOS, and Linux listening ports are local-only socket summaries. AI HomeGuard does not scan remote hosts or the local network. User-facing output summarizes ports and generic service hints, not usernames, file paths, process command arguments, passwords, tokens, or secrets.
 
 The local Administrators group check reports counts and categories only. Full local administrator usernames are intentionally not included in user-facing findings.
 
-On unsupported platforms, local check routes return an unsupported-platform report and do not run commands for the wrong operating system. In Docker, the backend sees the container operating system rather than the host.
+On unsupported platforms, local check routes return an unsupported-platform report and do not run commands for the wrong operating system. In Docker, the backend sees the container operating system rather than the host, so unified local audit results may describe the container environment.
 
 Local configuration should use `.env` files for private values. The repository ignores `.env` and `.env.*` while keeping `.env.example` as a safe placeholder file. Do not commit real secrets, API keys, credentials, private keys, or sensitive reports.
 

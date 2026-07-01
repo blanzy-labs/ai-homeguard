@@ -2,18 +2,19 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 5 Components
+## Current Slice 6 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
 - Demo data: deterministic static `HomeGuardReport` returned by `/demo/report`
 - Questionnaire: static friendly questions, local answer submission, and deterministic finding mapper
 - Windows, macOS, and Linux local checks: read-only platform-guarded check modules and report aggregators
+- Unified local device audit: runtime context, auto-detection, and dispatch to one matching platform runner
 - Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 5 extends the platform-check foundation to Windows, macOS, and Linux. It does not include remediation, network scanning, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
+Slice 6 adds a unified local audit flow on top of the Windows, macOS, and Linux foundations. It does not include new deep checks, remediation, network scanning, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
 
 ## Finding and Report Model
 
@@ -25,7 +26,7 @@ Findings are designed to support both home-user explanations and technical evide
 - D3FEND-informed defensive guidance with home action, rationale, difficulty, and estimated time
 - Optional ATT&CK context marked educational only
 
-Reports wrap findings with a summary, top actions, platform scope, disclaimer, and safety notes.
+Reports wrap findings with a summary, top actions, platform scope, disclaimer, safety notes, and optional privacy-safe runtime context.
 
 ## Demo Data Flow
 
@@ -63,7 +64,9 @@ Future real checks should use the same finding/report model so questionnaire fin
 Platform checks use a guarded command runner and explicit platform detection:
 
 - `backend/app/core/platform.py`: detects `windows`, `macos`, `linux`, or `unknown`
+- `backend/app/models/runtime.py`: privacy-safe runtime context model with platform, runtime environment, architecture, hostname-present boolean, notes, and limitations
 - `backend/app/core/command_runner.py`: runs allowlisted commands with timeouts and captured output
+- `backend/app/checks/local_runner.py`: unified local device audit dispatcher
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers
@@ -71,6 +74,25 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/checks/<platform>/runner.py`: platform audit aggregators that return `HomeGuardReport`
 
 Platform checks only run when the current platform matches the route. Unsupported platform routes return informational `unable_to_check` reports and do not invoke commands for the wrong operating system.
+
+Unified local audit flow:
+
+```text
+frontend -> GET /reports/local-device -> local_runner -> platform-specific runner -> HomeGuardReport
+```
+
+The unified runner reads privacy-safe runtime context, calls exactly one matching platform runner, attaches runtime context to the report, recomputes summary counts, and appends safety notes. In Docker, it adds a container limitation note because the backend sees the container operating system rather than the host.
+
+Runtime context route:
+
+- `GET /runtime`: returns detected platform, runtime environment, optional architecture, hostname-present boolean, notes, and limitations
+- Does not return hostname strings, usernames, personal paths, environment variables, or secrets
+
+Future merge path:
+
+- `backend/app/reports/merge.py` provides a minimal deterministic helper for combining reports later
+- The helper preserves findings, recomputes summary counts, combines safety notes, and keeps all work in memory
+- Future slices can combine questionnaire, local-device, and explicitly authorized network findings using this report shape
 
 ## Windows Check Modules
 
@@ -114,14 +136,14 @@ The ClamAV check never scans files. The disk encryption check reports `unable_to
 
 ## Mocked Test Strategy
 
-Development currently happens on a Mac Mini. Windows and Linux behavior is validated with fake command results and monkeypatched platform detection. macOS mapping is also covered by mocked outputs so tests do not depend on the developer machine's exact settings. Tests verify unsupported behavior, mocked output mapping, D3FEND guidance presence, command safety, and privacy-safe summaries without requiring Windows, Linux host access, real PowerShell, sudo, package updates, or file scans.
+Development currently happens on a Mac Mini. Windows and Linux behavior is validated with fake command results and monkeypatched platform detection. macOS mapping is also covered by mocked outputs so tests do not depend on the developer machine's exact settings. Unified local audit tests monkeypatch runtime context and platform runners to verify dispatch without running real platform commands. Tests verify unsupported behavior, mocked output mapping, D3FEND guidance presence, command safety, and privacy-safe summaries without requiring Windows, Linux host access, real PowerShell, sudo, package updates, or file scans.
 
 ## Planned Modules
 
 - `checks`: safe local checks for future audit slices
 - `knowledge/D3FEND`: D3FEND-informed defensive guidance references
-- `reports`: plain-English local report generation
+- `reports`: plain-English local report generation and future report merging
 - `questionnaire`: beginner-friendly user inputs and context
 - `platform adapters`: future router and network-aware implementations
 
-Future slices may unify platform reports or add explicitly authorized network-aware checks. Those checks should stay defensive, local-first, and explicit about user authorization.
+Future slices may combine questionnaire and local-device reports or add explicitly authorized network-aware checks. Those checks should stay defensive, local-first, and explicit about user authorization.

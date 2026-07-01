@@ -38,3 +38,11 @@ def test_linux_allowlist_does_not_run_package_updates_or_scans() -> None:
     assert all(" upgrade" not in command for command in rendered)
     assert all(" install" not in command for command in rendered)
     assert all("clamscan --version" in command or "clamscan" not in command for command in rendered)
+
+
+def test_unified_local_runner_does_not_define_scan_or_remediation_commands() -> None:
+    source_path = "app/checks/local_runner.py"
+    source = open(source_path, encoding="utf-8").read().lower()
+
+    for prohibited in ["nmap", "tcpdump", "tshark", "sudo", "subprocess", "clamscan", "softwareupdate"]:
+        assert prohibited not in source
