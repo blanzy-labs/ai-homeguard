@@ -6,6 +6,11 @@ type QuestionnaireScreenProps = {
   onAnswerChange: (questionId: string, value: string) => void;
   onSubmit: (submission: QuestionnaireSubmission) => void;
   isSubmitting: boolean;
+  kicker?: string;
+  heading?: string;
+  description?: string;
+  submitLabel?: string;
+  submittingLabel?: string;
 };
 
 export function QuestionnaireScreen({
@@ -14,6 +19,11 @@ export function QuestionnaireScreen({
   onAnswerChange,
   onSubmit,
   isSubmitting,
+  kicker = "Questionnaire",
+  heading = "Home Security Checklist",
+  description = "Answer what you can. Optional questions can be skipped, and no passwords, addresses, account names, device identifiers, or Wi-Fi join codes are requested.",
+  submitLabel = "View Questionnaire Results",
+  submittingLabel = "Building Report",
 }: QuestionnaireScreenProps) {
   const questions = sections.flatMap((section) => section.questions);
   const answeredCount = questions.filter((question) => answers[question.id]).length;
@@ -35,12 +45,9 @@ export function QuestionnaireScreen({
   return (
     <section className="questionnaire-panel" aria-labelledby="questionnaire-heading">
       <div className="flow-heading">
-        <p className="section-kicker">Questionnaire</p>
-        <h2 id="questionnaire-heading">Home Security Checklist</h2>
-        <p className="muted">
-          Answer what you can. Optional questions can be skipped, and no passwords, addresses,
-          account names, device identifiers, or Wi-Fi join codes are requested.
-        </p>
+        <p className="section-kicker">{kicker}</p>
+        <h2 id="questionnaire-heading">{heading}</h2>
+        <p className="muted">{description}</p>
       </div>
 
       <div className="progress-strip" aria-label="Questionnaire progress">
@@ -96,7 +103,7 @@ export function QuestionnaireScreen({
           disabled={!requiredAnswered || isSubmitting}
           onClick={() => onSubmit(buildSubmission())}
         >
-          {isSubmitting ? "Building Report" : "View Questionnaire Results"}
+          {isSubmitting ? submittingLabel : submitLabel}
         </button>
       </div>
     </section>

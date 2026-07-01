@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  exportJsonReport,
+  exportMarkdownReport,
   getDemoReport,
+  getCombinedReport,
   getLocalDeviceReport,
   getLinuxLocalReport,
   getMacOSLocalReport,
@@ -9,10 +12,12 @@ import {
   getRuntimeContext,
   getWindowsLocalReport,
   type HomeGuardReport,
+  type CombinedReportResponse,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
   type RuntimeContext,
 } from "./api/client";
+import { CombinedReportPanel } from "./components/CombinedReportPanel";
 import { DemoDashboard } from "./components/DemoDashboard";
 import { LocalAuditPanel } from "./components/LocalAuditPanel";
 import { ModeCard } from "./components/ModeCard";
@@ -26,6 +31,9 @@ type FlowStep =
   | "mode"
   | "questionnaire"
   | "results"
+  | "full-questionnaire"
+  | "full-options"
+  | "combined-results"
   | "demo"
   | "local"
   | "windows"
@@ -36,6 +44,12 @@ type ReportState =
   | { state: "idle" }
   | { state: "loading" }
   | { state: "ready"; report: HomeGuardReport }
+  | { state: "error"; message: string };
+
+type CombinedReportState =
+  | { state: "idle" }
+  | { state: "loading" }
+  | { state: "ready"; response: CombinedReportResponse }
   | { state: "error"; message: string };
 
 type QuestionnaireState =
@@ -59,7 +73,13 @@ export default function App() {
   const [demoReport, setDemoReport] = useState<ReportState>({ state: "idle" });
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireState>({ state: "idle" });
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
+  const [fullReportAnswers, setFullReportAnswers] = useState<Record<string, string>>({});
   const [questionnaireReport, setQuestionnaireReport] = useState<ReportState>({ state: "idle" });
+  const [combinedReport, setCombinedReport] = useState<CombinedReportState>({ state: "idle" });
+  const [combinedSubmission, setCombinedSubmission] = useState<QuestionnaireSubmission | null>(null);
+  const [includeLocalInCombined, setIncludeLocalInCombined] = useState(false);
+  const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [localReport, setLocalReport] = useState<ReportState>({ state: "idle" });
   const [runtimeContext, setRuntimeContext] = useState<RuntimeState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
@@ -114,6 +134,27 @@ export default function App() {
     }
   }
 
+  async function ensureQuestionnaireLoaded() {
+    if (questionnaire.state === "ready" || questionnaire.state === "loading") {
+      return;
+    }
+    setQuestionnaire({ state: "loading" });
+    try {
+      const sections = await getQuestionnaire();
+      setQuestionnaire({ state: "ready", sections });
+    } catch (error) {
+      setQuestionnaire({
+        state: "error",
+        message: error instanceof Error ? error.message : "Questionnaire unavailable",
+      });
+    }
+  }
+
+  async function openFullReportFlow() {
+    setFlowStep("full-questionnaire");
+    await ensureQuestionnaireLoaded();
+  }
+
   async function openLocalAudit() {
     setFlowStep("local");
     if (runtimeContext.state === "ready" || runtimeContext.state === "loading") {
@@ -145,6 +186,43 @@ export default function App() {
       });
     } finally {
       setIsSubmittingQuestionnaire(false);
+    }
+  }
+
+  function submitFullReportQuestionnaire(submission: QuestionnaireSubmission) {
+    setCombinedSubmission(submission);
+    setFlowStep("full-options");
+  }
+
+  async function buildCombinedReport() {
+    if (!combinedSubmission) {
+      setCombinedReport({ state: "error", message: "Questionnaire answers are required for the full report." });
+      setFlowStep("combined-results");
+      return;
+    }
+    if (includeLocalInCombined && !combinedLocalAcknowledged) {
+      setCombinedReport({
+        state: "error",
+        message: "Please acknowledge the read-only local device audit before including local checks.",
+      });
+      return;
+    }
+    setCombinedReport({ state: "loading" });
+    setExportStatus(null);
+    setFlowStep("combined-results");
+    try {
+      const response = await getCombinedReport({
+        include_questionnaire: true,
+        include_local_device: includeLocalInCombined,
+        questionnaire_submission: combinedSubmission,
+        acknowledged_authorization: includeLocalInCombined ? combinedLocalAcknowledged : false,
+      });
+      setCombinedReport({ state: "ready", response });
+    } catch (error) {
+      setCombinedReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Combined report unavailable",
+      });
     }
   }
 
@@ -203,6 +281,38 @@ export default function App() {
     }
   }
 
+  async function exportMarkdown(report: HomeGuardReport) {
+    try {
+      const markdown = await exportMarkdownReport(report);
+      downloadText("ai-homeguard-report.md", markdown, "text/markdown");
+      setExportStatus("Markdown export created in your browser.");
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : "Markdown export unavailable");
+    }
+  }
+
+  async function exportJson(report: HomeGuardReport) {
+    try {
+      const json = await exportJsonReport(report);
+      downloadText("ai-homeguard-report.json", JSON.stringify(json, null, 2), "application/json");
+      setExportStatus("JSON export created in your browser.");
+    } catch (error) {
+      setExportStatus(error instanceof Error ? error.message : "JSON export unavailable");
+    }
+  }
+
+  function downloadText(filename: string, content: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   return (
     <main className="app-shell">
       <section className={flowStep === "welcome" ? "intro intro--welcome" : "intro intro--compact"}>
@@ -215,8 +325,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 6 adds one auto-detected local device audit
-          that chooses the right read-only checks for this runtime.
+          A defensive home cyber hygiene helper. Slice 7 combines questionnaire and optional
+          read-only local device findings into one exportable report.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -228,7 +338,8 @@ export default function App() {
             <h2 id="welcome-heading">A calm checklist for home security basics</h2>
             <p className="muted">
               AI HomeGuard explains defensive steps in plain language and keeps this slice limited
-              to local read-only checks, runtime context, demo data, and questionnaire answers.
+              to local read-only checks, runtime context, demo data, questionnaire answers, and
+              user-triggered report exports.
             </p>
           </div>
           <div className="welcome-actions">
@@ -263,6 +374,8 @@ export default function App() {
             <li>Does not exploit, attack, brute-force, or packet-sniff.</li>
             <li>Does not scan networks or public targets.</li>
             <li>Does not upload data or call an AI provider.</li>
+            <li>Does not save reports automatically.</li>
+            <li>Exports are created only when you click an export button.</li>
             <li>Questionnaire answers stay in this browser session and are not uploaded.</li>
             <li>Future network checks will require explicit authorization.</li>
           </ul>
@@ -306,6 +419,12 @@ export default function App() {
             </p>
           </div>
           <div className="mode-grid">
+            <ModeCard
+              title="Full HomeGuard Report"
+              status="Available"
+              description="Answer the home security questionnaire and optionally include read-only local device checks."
+              onSelect={openFullReportFlow}
+            />
             <ModeCard
               title="Local Device Audit"
               status="Available"
@@ -371,6 +490,122 @@ export default function App() {
             setQuestionnaireAnswers((current) => ({ ...current, [questionId]: value }))
           }
           onSubmit={submitQuestionnaire}
+        />
+      )}
+
+      {flowStep === "full-questionnaire" && questionnaire.state === "loading" && (
+        <section className="loading-panel">
+          <p className="section-kicker">Full report</p>
+          <h2>Loading checklist</h2>
+          <p className="muted">Fetching local questionnaire questions from the backend.</p>
+        </section>
+      )}
+
+      {flowStep === "full-questionnaire" && questionnaire.state === "error" && (
+        <section className="loading-panel loading-panel--error">
+          <p className="section-kicker">Full report</p>
+          <h2>Checklist unavailable</h2>
+          <p>{questionnaire.message}</p>
+        </section>
+      )}
+
+      {flowStep === "full-questionnaire" && questionnaire.state === "ready" && (
+        <QuestionnaireScreen
+          sections={questionnaire.sections}
+          answers={fullReportAnswers}
+          isSubmitting={false}
+          kicker="Full HomeGuard Report"
+          heading="Start with the home security questionnaire"
+          description="These answers create questionnaire findings for the combined report. No passwords, addresses, account names, device identifiers, or Wi-Fi join codes are requested."
+          submitLabel="Continue to Local Audit Options"
+          onAnswerChange={(questionId, value) =>
+            setFullReportAnswers((current) => ({ ...current, [questionId]: value }))
+          }
+          onSubmit={submitFullReportQuestionnaire}
+        />
+      )}
+
+      {flowStep === "full-options" && (
+        <section className="questionnaire-panel" aria-labelledby="full-options-heading">
+          <div className="flow-heading">
+            <p className="section-kicker">Full report</p>
+            <h2 id="full-options-heading">Choose report sources</h2>
+            <p className="muted">
+              The questionnaire is included. You can also add read-only local device checks. No
+              network scan is run, no settings are changed, and no data is uploaded.
+            </p>
+          </div>
+
+          <label className="acknowledgement">
+            <input
+              type="checkbox"
+              checked={includeLocalInCombined}
+              onChange={(event) => {
+                setIncludeLocalInCombined(event.target.checked);
+                if (!event.target.checked) {
+                  setCombinedLocalAcknowledged(false);
+                }
+              }}
+            />
+            <span>Include read-only local device audit findings in the combined report.</span>
+          </label>
+
+          {includeLocalInCombined ? (
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={combinedLocalAcknowledged}
+                onChange={(event) => setCombinedLocalAcknowledged(event.target.checked)}
+              />
+              <span>
+                I understand AI HomeGuard will run read-only local checks on this device. It will
+                not change settings, scan the network, upload data, or attempt remediation.
+              </span>
+            </label>
+          ) : null}
+
+          <div className="flow-actions">
+            <button className="secondary-button" type="button" onClick={() => setFlowStep("full-questionnaire")}>
+              Back
+            </button>
+            <button
+              className="primary-button"
+              type="button"
+              disabled={includeLocalInCombined && !combinedLocalAcknowledged}
+              onClick={buildCombinedReport}
+            >
+              Build Combined Report
+            </button>
+          </div>
+        </section>
+      )}
+
+      {flowStep === "combined-results" && combinedReport.state === "loading" && (
+        <section className="loading-panel">
+          <p className="section-kicker">Full report</p>
+          <h2>Building combined report</h2>
+          <p className="muted">Combining selected findings in memory.</p>
+        </section>
+      )}
+
+      {flowStep === "combined-results" && combinedReport.state === "error" && (
+        <section className="loading-panel loading-panel--error">
+          <p className="section-kicker">Full report</p>
+          <h2>Combined report unavailable</h2>
+          <p>{combinedReport.message}</p>
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </section>
+      )}
+
+      {flowStep === "combined-results" && combinedReport.state === "ready" && (
+        <CombinedReportPanel
+          response={combinedReport.response}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onBackToModes={() => setFlowStep("mode")}
         />
       )}
 

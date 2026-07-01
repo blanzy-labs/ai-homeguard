@@ -19,6 +19,22 @@ function formatValue(value: string) {
     .join(" ");
 }
 
+function sourceLabel(finding: Finding) {
+  if (finding.tags.includes("questionnaire")) {
+    return "Questionnaire";
+  }
+  if (finding.tags.includes("unsupported-platform")) {
+    return "Unsupported Platform";
+  }
+  if (finding.evidence.some((item) => item.source.toLowerCase().includes("runtime"))) {
+    return "Runtime Context";
+  }
+  if (finding.tags.includes("demo")) {
+    return "Demo";
+  }
+  return "Local Device";
+}
+
 export function FindingCard({ finding }: FindingCardProps) {
   return (
     <article className={`finding-card finding-card--${finding.status}`}>
@@ -46,6 +62,10 @@ export function FindingCard({ finding }: FindingCardProps) {
         <div>
           <dt>Difficulty</dt>
           <dd>{formatValue(finding.difficulty)}</dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd>{sourceLabel(finding)}</dd>
         </div>
       </dl>
 

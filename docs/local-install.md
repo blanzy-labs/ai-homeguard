@@ -59,6 +59,9 @@ Expected URLs:
 - Version: http://localhost:8000/version
 - Runtime context: http://localhost:8000/runtime
 - Local device report: http://localhost:8000/reports/local-device
+- Combined report: http://localhost:8000/reports/combined
+- Markdown export: http://localhost:8000/reports/export/markdown
+- JSON export: http://localhost:8000/reports/export/json
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local

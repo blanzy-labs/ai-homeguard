@@ -90,7 +90,7 @@ export type HomeGuardReport = {
   app: string;
   version: string;
   generated_at: string;
-  mode: "demo" | "local";
+  mode: "demo" | "local" | "combined";
   platform_scope: string[];
   summary: ReportSummary;
   findings: Finding[];
@@ -148,6 +148,22 @@ export type QuestionnaireResult = {
   skipped_count: number;
   findings: Finding[];
   top_actions: string[];
+};
+
+export type CombinedReportRequest = {
+  include_local_device?: boolean;
+  include_questionnaire?: boolean;
+  questionnaire_submission?: QuestionnaireSubmission | null;
+  acknowledged_authorization?: boolean;
+  export_format?: "none" | "markdown" | "json";
+};
+
+export type CombinedReportResponse = {
+  report: HomeGuardReport;
+  export_markdown?: string | null;
+  export_json?: Record<string, unknown> | null;
+  warnings: string[];
+  limitations: string[];
 };
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -222,4 +238,47 @@ export async function getLocalDeviceReport(): Promise<HomeGuardReport> {
 
 export async function getRuntimeContext(): Promise<RuntimeContext> {
   return getJson<RuntimeContext>("/runtime");
+}
+
+export async function getCombinedReport(request: CombinedReportRequest): Promise<CombinedReportResponse> {
+  const response = await fetch(`${apiBaseUrl}/reports/combined`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      message = payload.detail ?? message;
+    } catch {
+      message = await response.text();
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<CombinedReportResponse>;
+}
+
+export async function exportMarkdownReport(report: HomeGuardReport): Promise<string> {
+  const response = await fetch(`${apiBaseUrl}/reports/export/markdown`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(report),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.text();
+}
+
+export async function exportJsonReport(report: HomeGuardReport): Promise<Record<string, unknown>> {
+  const response = await fetch(`${apiBaseUrl}/reports/export/json`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(report),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json() as Promise<Record<string, unknown>>;
 }

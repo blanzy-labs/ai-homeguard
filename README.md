@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 6 - Unified Local Audit Report and Platform Auto-Detection.
+Current slice: Slice 7 - Combined HomeGuard Report and Export Foundation.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,7 +16,7 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 6 does not include:
+Slice 7 does not include:
 
 - Network scanning
 - Nmap integration
@@ -27,10 +27,13 @@ Slice 6 does not include:
 - sudo or administrator escalation
 - ClamAV file scans
 - Packet capture
+- Automatic report saving
 
 Windows, macOS, and Linux checks are read-only and only execute when AI HomeGuard is running on the matching operating system. Unsupported platform routes return an informational report without running commands for the wrong platform.
 
 The unified local device audit auto-detects the runtime platform and calls the matching Windows, macOS, or Linux runner. If the backend is running inside Docker, results may reflect the container environment rather than the host computer.
+
+The combined report can merge questionnaire-derived findings with optional read-only local device audit findings. Exports are user-triggered only and are not saved automatically or uploaded.
 
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance is currently static demo content, and optional ATT&CK context is educational only.
 
@@ -127,6 +130,33 @@ Safety boundaries:
 - No usernames, file paths, process command arguments, passwords, tokens, or secrets collected from listening-port checks
 
 When a platform route is called from the wrong operating system, AI HomeGuard returns an unsupported-platform report with `unable_to_check` findings and does not execute that platform's commands.
+
+## Combined Report and Export APIs
+
+Combined report:
+
+```bash
+curl -X POST http://localhost:8000/reports/combined
+```
+
+Export routes:
+
+- `POST /reports/export/markdown`
+- `POST /reports/export/json`
+
+Combined reports can include:
+
+- Questionnaire-derived findings
+- Optional local device audit findings after authorization acknowledgement
+- Existing safety notes, runtime context, D3FEND-informed guidance, and top actions
+
+Exports:
+
+- Are user-triggered only
+- Are returned as Markdown or JSON
+- Are not saved automatically by the backend
+- Are not uploaded to any external service
+- May include questionnaire answers and local audit evidence, so review before sharing
 
 ## Local Install
 
@@ -231,6 +261,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Slice 4 Validation](docs/validation/slice-4-validation.md)
 - [Slice 5 Validation](docs/validation/slice-5-validation.md)
 - [Slice 6 Validation](docs/validation/slice-6-validation.md)
+- [Slice 7 Validation](docs/validation/slice-7-validation.md)
 
 ## License
 

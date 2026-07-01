@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 6 includes:
+Slice 7 includes:
 
 - No telemetry
 - No database
@@ -15,6 +15,8 @@ Slice 6 includes:
 - Read-only macOS local audit commands only when running on macOS
 - Read-only Linux local audit commands only when running on Linux
 - Unified local device audit that calls only the matching detected platform runner
+- Combined reports from questionnaire findings and optional local device findings
+- User-triggered Markdown and JSON exports
 - Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
@@ -23,6 +25,7 @@ Slice 6 includes:
 - Static fake demo data only
 - Questionnaire answers kept in browser memory and submitted only to the local backend
 - No questionnaire answer persistence
+- No automatic report persistence
 
 AI HomeGuard does not exploit, brute-force, capture credentials, sniff packets, or attack targets.
 
@@ -33,6 +36,10 @@ The `/demo/report` endpoint returns a deterministic fake report for UI developme
 The questionnaire avoids passwords, credentials, addresses, usernames, email addresses, IP addresses, MAC addresses, and other personal identifiers. Users should not enter secrets or identifying details into questionnaire fields.
 
 The questionnaire endpoints do not upload data to an external service and do not write answers to disk. The returned report is generated in memory from the submitted answers.
+
+Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement.
+
+Markdown and JSON exports are user-triggered. The backend returns export content to the browser or caller; it does not save a copy. Exported reports may contain user-provided questionnaire answers and local audit evidence, so users should review exports before sharing them.
 
 Windows local checks are designed to be read-only. They do not enable or disable Defender, Firewall, BitLocker, Remote Desktop, SMB, services, or Windows Update. They do not attempt remediation and do not require administrator privileges for baseline behavior.
 

@@ -46,3 +46,21 @@ def test_unified_local_runner_does_not_define_scan_or_remediation_commands() -> 
 
     for prohibited in ["nmap", "tcpdump", "tshark", "sudo", "subprocess", "clamscan", "softwareupdate"]:
         assert prohibited not in source
+
+
+def test_report_export_modules_do_not_persist_or_call_external_services() -> None:
+    for source_path in ["app/reports/markdown.py", "app/reports/json_export.py", "app/reports/merge.py"]:
+        source = open(source_path, encoding="utf-8").read().lower()
+        for prohibited in [
+            "open(",
+            "write_text",
+            "requests",
+            "httpx",
+            "openai",
+            "telemetry",
+            "sqlite",
+            "postgres",
+            "subprocess",
+            "nmap",
+        ]:
+            assert prohibited not in source

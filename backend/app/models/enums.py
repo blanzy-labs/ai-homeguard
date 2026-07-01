@@ -66,3 +66,4 @@ class D3FENDGuidanceCategory(str, Enum):
 class ReportMode(str, Enum):
     DEMO = "demo"
     LOCAL = "local"
+    COMBINED = "combined"

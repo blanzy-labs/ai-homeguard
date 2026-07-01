@@ -2,7 +2,7 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 6 Components
+## Current Slice 7 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
@@ -10,11 +10,12 @@ AI HomeGuard uses a simple local-first web app structure.
 - Questionnaire: static friendly questions, local answer submission, and deterministic finding mapper
 - Windows, macOS, and Linux local checks: read-only platform-guarded check modules and report aggregators
 - Unified local device audit: runtime context, auto-detection, and dispatch to one matching platform runner
+- Combined report and export layer: report merge service, combined report route, Markdown export, and JSON export
 - Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 6 adds a unified local audit flow on top of the Windows, macOS, and Linux foundations. It does not include new deep checks, remediation, network scanning, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
+Slice 7 adds a combined report and export foundation on top of the questionnaire and local audit foundations. It does not include new deep checks, network discovery, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
 
 ## Finding and Report Model
 
@@ -59,6 +60,28 @@ The mapper in `backend/app/questionnaire/report_builder.py` converts selected an
 
 Future real checks should use the same finding/report model so questionnaire findings and local check findings can be merged into one report.
 
+## Combined Report Flow
+
+```text
+frontend -> questionnaire answers + optional local audit authorization
+frontend -> POST /reports/combined
+/reports/combined -> questionnaire report builder + optional local_runner
+merge_homeguard_reports -> combined HomeGuardReport
+frontend -> POST /reports/export/markdown or /reports/export/json when user clicks export
+```
+
+The combined route works in memory only. It does not persist questionnaire answers, local audit results, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement.
+
+The merge service in `backend/app/reports/merge.py` preserves findings, D3FEND guidance, and educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
+
+The export layer:
+
+- `backend/app/reports/markdown.py`: renders a calm Markdown report for user-triggered download
+- `backend/app/reports/json_export.py`: validates and returns a serializable report dictionary
+- Does not write files to disk, call external services, or upload data
+
+Future slices may add richer D3FEND knowledge and, later, AI-assisted summaries generated from the same report model after explicit user consent.
+
 ## Platform Check Architecture
 
 Platform checks use a guarded command runner and explicit platform detection:
@@ -67,6 +90,9 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/models/runtime.py`: privacy-safe runtime context model with platform, runtime environment, architecture, hostname-present boolean, notes, and limitations
 - `backend/app/core/command_runner.py`: runs allowlisted commands with timeouts and captured output
 - `backend/app/checks/local_runner.py`: unified local device audit dispatcher
+- `backend/app/reports/merge.py`: combined report merge and summary helper
+- `backend/app/reports/markdown.py`: Markdown report renderer
+- `backend/app/reports/json_export.py`: JSON export helper
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers

@@ -93,6 +93,22 @@ Use `/reports/local-device` for normal home-user flow. The manual routes remain 
 
 Manual routes return unsupported-platform reports when called from the wrong runtime.
 
+## Combined Report Authorization Error
+
+If `/reports/combined` returns an authorization error, the request asked to include local device audit findings without setting `acknowledged_authorization` to `true`. Local checks are read-only, but AI HomeGuard still requires explicit acknowledgement before adding them to a combined report.
+
+## Questionnaire Required for Combined Report
+
+If `include_questionnaire` is true, `/reports/combined` requires a questionnaire submission. Submit questionnaire answers first, or set `include_questionnaire` to false when only local device findings are wanted.
+
+## Export Download Is Blocked
+
+Markdown and JSON exports are created only after clicking an export button. If the browser blocks the download, check browser download permissions for `localhost:5173` or use the backend export response directly.
+
+## Markdown Export Is Missing Findings
+
+Markdown export renders the `HomeGuardReport` sent to `/reports/export/markdown`. If it has no findings, rebuild the combined report and confirm questionnaire answers or local audit findings were included.
+
 ## PowerShell Is Unavailable on Windows
 
 The Windows check foundation uses read-only PowerShell commands for most checks. If PowerShell is unavailable or blocked, affected checks return `unable_to_check` instead of changing settings or requiring remediation.

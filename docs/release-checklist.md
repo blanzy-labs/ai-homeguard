@@ -19,6 +19,11 @@
 - Safety acknowledgement is UI-only and not persisted
 - Unified local device audit route validates auto-detection and dispatch behavior
 - Runtime context route avoids hostname strings, usernames, paths, environment variables, and secrets
+- Combined report route validates questionnaire-only and questionnaire-plus-local behavior
+- Combined report local audit requires authorization acknowledgement
+- Markdown export route validates user-triggered report rendering
+- JSON export route validates user-triggered report serialization
+- No report auto-save or backend persistence included
 - Docker limitation note appears when container runtime is detected
 - Windows local check route validates unsupported-platform behavior on macOS/Linux
 - Windows command runner uses allowlisted read-only commands

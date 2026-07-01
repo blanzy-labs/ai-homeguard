@@ -537,13 +537,20 @@ h3 {
 }
 
 .action-plan,
-.safety-notes {
+.safety-notes,
+.export-panel {
   display: grid;
   gap: 14px;
   padding: 24px;
   border: 1px solid #d6d9d1;
   border-radius: 8px;
   background: #ffffff;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .action-plan ol,
