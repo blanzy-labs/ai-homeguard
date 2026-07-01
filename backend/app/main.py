@@ -6,6 +6,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.questionnaire import router as questionnaire_router
 from app.api.routes.reports import router as reports_router
 from app.api.routes.version import router as version_router
+from app.api.routes.windows_checks import router as windows_checks_router
 from app.version import APP_NAME, APP_VERSION
 
 
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
     application.include_router(demo_router)
     application.include_router(questionnaire_router)
     application.include_router(reports_router)
+    application.include_router(windows_checks_router)
     return application
 
 

@@ -2,17 +2,18 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 3 Components
+## Current Slice 4 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
 - Demo data: deterministic static `HomeGuardReport` returned by `/demo/report`
 - Questionnaire: static friendly questions, local answer submission, and deterministic finding mapper
-- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, results, and demo dashboard UI
+- Windows local checks: read-only platform-guarded check modules and report aggregator
+- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, Windows audit panel, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 3 shapes the safety-first user flow and questionnaire foundation. It does not include audit checks, platform security checks, network scanning, OpenAI calls, AI provider integrations, persistence, or live D3FEND mapping logic.
+Slice 4 adds the first real platform-check foundation for Windows. It does not include remediation, network scanning, OpenAI calls, AI provider integrations, persistence, or live D3FEND mapping logic.
 
 ## Finding and Report Model
 
@@ -56,6 +57,36 @@ Questionnaire routes:
 The mapper in `backend/app/questionnaire/report_builder.py` converts selected answers into the existing `Finding` model. It uses questionnaire evidence, confidence based on answer certainty, non-alarmist statuses, and static D3FEND-informed guidance.
 
 Future real checks should use the same finding/report model so questionnaire findings and local check findings can be merged into one report.
+
+## Platform Check Architecture
+
+Platform checks use a guarded command runner and explicit platform detection:
+
+- `backend/app/core/platform.py`: detects `windows`, `macos`, `linux`, or `unknown`
+- `backend/app/core/command_runner.py`: runs allowlisted commands with timeouts and captured output
+- `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
+- `backend/app/checks/windows/*.py`: individual read-only check modules
+- `backend/app/checks/windows/runner.py`: Windows audit aggregator that returns `HomeGuardReport`
+
+Windows checks only run when the current platform is Windows. On macOS or Linux, `/reports/windows-local` returns an unsupported-platform report and does not invoke Windows commands.
+
+## Windows Check Modules
+
+Slice 4 includes read-only modules for:
+
+- Microsoft Defender status
+- Windows Firewall profile status
+- BitLocker or device encryption status
+- Remote Desktop status
+- Local listening ports summary
+- Local Administrators group count/category summary
+- Light Windows version/update visibility
+
+The local administrator check intentionally summarizes counts and categories instead of exposing full account names in user-facing output.
+
+## Mocked Test Strategy
+
+Development currently happens on a Mac Mini, so Windows tests use fake command results and monkeypatched platform detection. Tests verify non-Windows unsupported behavior, mocked Windows output mapping, D3FEND guidance presence, timeout handling, and privacy-safe local administrator summaries without requiring a Windows machine or running PowerShell.
 
 ## Planned Modules
 

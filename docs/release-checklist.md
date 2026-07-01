@@ -17,10 +17,14 @@
 - Questionnaire asks for no secrets, credentials, addresses, or personal identifiers
 - Questionnaire-derived findings use the existing finding/report model
 - Safety acknowledgement is UI-only and not persisted
+- Windows local check route validates unsupported-platform behavior on macOS/Linux
+- Windows command runner uses allowlisted read-only commands
+- Windows local check tests use mocked command output and do not require Windows
+- Windows local admin output does not expose full usernames in user-facing findings
 - No network scan logic included yet
 - No Nmap integration included yet
-- No local audit commands included yet
-- No platform security check logic included yet
+- No remediation/settings-change commands included yet
+- No macOS/Linux local check logic included yet
 - No AI provider code included yet
 - No unsupported feature claims
 - No tag movement

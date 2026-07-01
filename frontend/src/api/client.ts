@@ -193,3 +193,7 @@ export async function getQuestionnaireReport(
   }
   return response.json() as Promise<HomeGuardReport>;
 }
+
+export async function getWindowsLocalReport(): Promise<HomeGuardReport> {
+  return getJson<HomeGuardReport>("/reports/windows-local");
+}

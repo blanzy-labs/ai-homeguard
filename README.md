@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 3 - Safety-First UX and Questionnaire Foundation.
+Current slice: Slice 4 - Windows Local Checks Foundation.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, Docker Compose wiring, and project documentation. It does not include real audit checks yet.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows local check foundation, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,14 +16,17 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 3 does not include:
+Slice 4 does not include:
 
 - Network scanning
 - Nmap integration
-- Windows, macOS, or Linux security check logic
+- macOS or Linux security check logic
 - OpenAI or other AI provider calls
 - Live D3FEND mapping logic
 - Telemetry, login, cloud storage, or database persistence
+- Remediation or settings changes
+
+Windows checks are read-only and only execute when AI HomeGuard is running on Windows. On macOS or Linux, the Windows report route returns an unsupported-platform report without running Windows commands.
 
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance is currently static demo content, and optional ATT&CK context is educational only.
 
@@ -54,6 +57,38 @@ Demo aliases:
 - `GET /reports/demo`
 
 These endpoints return static questions, fake demo data, or questionnaire-derived findings. They do not run local commands, inspect the device, scan the network, call an AI provider, upload data, or persist questionnaire answers.
+
+## Windows Local Audit API
+
+Slice 4 adds a Windows local audit report endpoint:
+
+```bash
+curl http://localhost:8000/reports/windows-local
+```
+
+Additional route:
+
+- `GET /checks/windows`
+
+Windows check scope:
+
+- Microsoft Defender status
+- Windows Firewall profile status
+- BitLocker or device encryption status
+- Remote Desktop status
+- Local listening ports summary
+- Local Administrators group summary
+- Light Windows version/update visibility
+
+Safety boundaries:
+
+- Read-only checks only
+- No settings changed
+- No remediation attempted
+- No network scans
+- No AI calls
+- No persistence
+- No local administrator usernames exposed in user-facing output
 
 ## Local Install
 
@@ -103,6 +138,7 @@ Expected URLs:
 - Version: http://localhost:8000/version
 - Demo report: http://localhost:8000/demo/report
 - Questionnaire: http://localhost:8000/questionnaire
+- Windows local report: http://localhost:8000/reports/windows-local
 - API docs: http://localhost:8000/docs
 
 ## Development Commands
@@ -129,6 +165,7 @@ curl http://localhost:8000/health
 curl http://localhost:8000/version
 curl http://localhost:8000/questionnaire
 curl http://localhost:8000/demo/report
+curl http://localhost:8000/reports/windows-local
 docker compose down
 ```
 

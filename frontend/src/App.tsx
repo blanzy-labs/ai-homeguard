@@ -3,6 +3,7 @@ import {
   getDemoReport,
   getQuestionnaire,
   getQuestionnaireReport,
+  getWindowsLocalReport,
   type HomeGuardReport,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
@@ -12,8 +13,9 @@ import { ModeCard } from "./components/ModeCard";
 import { QuestionnaireResults } from "./components/QuestionnaireResults";
 import { QuestionnaireScreen } from "./components/QuestionnaireScreen";
 import { StatusPanel } from "./components/StatusPanel";
+import { WindowsAuditPanel } from "./components/WindowsAuditPanel";
 
-type FlowStep = "welcome" | "safety" | "mode" | "questionnaire" | "results" | "demo";
+type FlowStep = "welcome" | "safety" | "mode" | "questionnaire" | "results" | "demo" | "windows";
 
 type ReportState =
   | { state: "idle" }
@@ -34,6 +36,7 @@ export default function App() {
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireState>({ state: "idle" });
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
   const [questionnaireReport, setQuestionnaireReport] = useState<ReportState>({ state: "idle" });
+  const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
   const [isSubmittingQuestionnaire, setIsSubmittingQuestionnaire] = useState(false);
 
   useEffect(() => {
@@ -97,6 +100,19 @@ export default function App() {
       });
     } finally {
       setIsSubmittingQuestionnaire(false);
+    }
+  }
+
+  async function runWindowsLocalCheck() {
+    setWindowsReport({ state: "loading" });
+    try {
+      const report = await getWindowsLocalReport();
+      setWindowsReport({ state: "ready", report });
+    } catch (error) {
+      setWindowsReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Windows local report unavailable",
+      });
     }
   }
 
@@ -211,6 +227,12 @@ export default function App() {
               onSelect={openQuestionnaire}
             />
             <ModeCard
+              title="Windows Device Audit"
+              status="Available"
+              description="Run read-only Windows posture checks, or see a safe unsupported-platform result here."
+              onSelect={() => setFlowStep("windows")}
+            />
+            <ModeCard
               title="Device-only Audit"
               status="Coming soon"
               description="Future local device checks with clear boundaries and consent."
@@ -296,6 +318,20 @@ export default function App() {
       {flowStep === "demo" && demoReport.state === "ready" && (
         <>
           <DemoDashboard report={demoReport.report} />
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </>
+      )}
+
+      {flowStep === "windows" && (
+        <>
+          <WindowsAuditPanel
+            report={windowsReport.state === "ready" ? windowsReport.report : null}
+            loading={windowsReport.state === "loading"}
+            error={windowsReport.state === "error" ? windowsReport.message : null}
+            onRun={runWindowsLocalCheck}
+          />
           <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
             Back to Modes
           </button>
