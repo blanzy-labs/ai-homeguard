@@ -13,6 +13,10 @@
 - Demo report route validation passes
 - Demo dashboard build passes
 - Demo data clearly marked fake/static
+- Questionnaire routes return static questions and in-memory results
+- Questionnaire asks for no secrets, credentials, addresses, or personal identifiers
+- Questionnaire-derived findings use the existing finding/report model
+- Safety acknowledgement is UI-only and not persisted
 - No network scan logic included yet
 - No Nmap integration included yet
 - No local audit commands included yet

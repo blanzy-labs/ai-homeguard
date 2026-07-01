@@ -98,6 +98,48 @@ export type HomeGuardReport = {
   safety_notes: string[];
 };
 
+export type QuestionnaireOption = {
+  value: string;
+  label: string;
+};
+
+export type QuestionnaireQuestion = {
+  id: string;
+  section: string;
+  prompt: string;
+  help_text?: string | null;
+  answer_type: "yes_no" | "yes_no_unsure" | "single_choice" | "multi_choice" | "text_short";
+  options: QuestionnaireOption[];
+  required: boolean;
+  home_user_label?: string | null;
+};
+
+export type QuestionnaireSection = {
+  id: string;
+  title: string;
+  description: string;
+  questions: QuestionnaireQuestion[];
+};
+
+export type QuestionnaireAnswer = {
+  question_id: string;
+  value: string | string[] | null;
+  skipped?: boolean;
+};
+
+export type QuestionnaireSubmission = {
+  answers: QuestionnaireAnswer[];
+  mode?: "demo" | "questionnaire";
+  generated_at?: string | null;
+};
+
+export type QuestionnaireResult = {
+  answered_count: number;
+  skipped_count: number;
+  findings: Finding[];
+  top_actions: string[];
+};
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -118,4 +160,36 @@ export async function getVersion(): Promise<VersionResponse> {
 
 export async function getDemoReport(): Promise<HomeGuardReport> {
   return getJson<HomeGuardReport>("/demo/report");
+}
+
+export async function getQuestionnaire(): Promise<QuestionnaireSection[]> {
+  return getJson<QuestionnaireSection[]>("/questionnaire");
+}
+
+export async function evaluateQuestionnaire(
+  submission: QuestionnaireSubmission,
+): Promise<QuestionnaireResult> {
+  const response = await fetch(`${apiBaseUrl}/questionnaire/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submission),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json() as Promise<QuestionnaireResult>;
+}
+
+export async function getQuestionnaireReport(
+  submission: QuestionnaireSubmission,
+): Promise<HomeGuardReport> {
+  const response = await fetch(`${apiBaseUrl}/reports/questionnaire`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submission),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json() as Promise<HomeGuardReport>;
 }

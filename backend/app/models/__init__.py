@@ -11,6 +11,16 @@ from app.models.enums import (
 from app.models.evidence import Evidence
 from app.models.finding import Finding
 from app.models.guidance import AttackContext, D3FENDGuidance
+from app.models.questionnaire import (
+    QuestionnaireAnswer,
+    QuestionnaireAnswerType,
+    QuestionnaireMode,
+    QuestionnaireOption,
+    QuestionnaireQuestion,
+    QuestionnaireResult,
+    QuestionnaireSection,
+    QuestionnaireSubmission,
+)
 from app.models.report import HomeGuardReport, ReportSummary
 
 __all__ = [
@@ -25,6 +35,14 @@ __all__ = [
     "FindingStatus",
     "HomeGuardReport",
     "Platform",
+    "QuestionnaireAnswer",
+    "QuestionnaireAnswerType",
+    "QuestionnaireMode",
+    "QuestionnaireOption",
+    "QuestionnaireQuestion",
+    "QuestionnaireResult",
+    "QuestionnaireSection",
+    "QuestionnaireSubmission",
     "ReportMode",
     "ReportSummary",
     "Severity",
