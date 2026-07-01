@@ -423,7 +423,7 @@ def get_demo_report() -> HomeGuardReport:
                 _evidence(
                     "demo data",
                     "Static report returned by /demo/report",
-                    "No real checks in Slice 2",
+                    "No real checks in demo mode",
                     "No system command, network scanner, packet capture, telemetry, database, or AI call is used.",
                 )
             ],
@@ -448,7 +448,7 @@ def get_demo_report() -> HomeGuardReport:
     ]
 
     return enrich_report_guidance(HomeGuardReport(
-        report_id="demo-homeguard-report-v0-1-slice-2",
+        report_id="demo-homeguard-report-v0-1",
         app=APP_NAME,
         version=APP_VERSION,
         generated_at=DEMO_GENERATED_AT,
@@ -483,7 +483,7 @@ def get_demo_report() -> HomeGuardReport:
         ),
         safety_notes=[
             "Demo mode uses static sample data only.",
-            "No real Windows, macOS, Linux, router, or network checks are run in Slice 2.",
+            "No real Windows, macOS, Linux, router, or network checks are run in demo mode.",
             "No network scan, packet capture, credential test, exploit, AI call, telemetry, or database is used.",
             "Any ATT&CK context is educational only and does not indicate activity on your device.",
         ],

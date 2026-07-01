@@ -57,7 +57,7 @@ def test_homeguard_report_serializes_to_json_values() -> None:
     report = HomeGuardReport(
         report_id="test-report",
         app="AI HomeGuard",
-        version="0.1.0-dev",
+        version="0.1.0",
         generated_at=datetime(2026, 7, 1, 12, 0, tzinfo=UTC),
         mode=ReportMode.DEMO,
         platform_scope=[Platform.CROSS_PLATFORM],

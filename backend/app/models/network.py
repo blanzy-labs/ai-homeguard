@@ -26,7 +26,7 @@ class NetworkScopeType(str, Enum):
 class NetworkAuthorization(BaseModel):
     acknowledged: bool = False
     scope: NetworkAuthorizationScope = NetworkAuthorizationScope.NONE
-    statement_version: str = "v0.1.0-slice-9"
+    statement_version: str = "v0.1.0-network-awareness"
     timestamp: datetime | None = None
     notes: str | None = None
 

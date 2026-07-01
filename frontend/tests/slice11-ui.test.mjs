@@ -35,6 +35,7 @@ test("mode navigation keeps recommended, secondary, and advanced paths visible",
   [
     "Full HomeGuard Report",
     "Demo Mode",
+    "All Modes",
     "Local Device Audit",
     "Home Security Questionnaire",
     "Device Inventory Helper",
@@ -42,14 +43,67 @@ test("mode navigation keeps recommended, secondary, and advanced paths visible",
     "Windows Device Audit",
     "macOS Device Audit",
     "Linux Device Audit",
+    "Report Review / Export",
+    "Advanced Checks",
   ].forEach((label) => assert.match(app, new RegExp(label)));
 
   assert.match(app, /status="Recommended"/);
   assert.match(app, /mode-group--recommended/);
   assert.match(app, /mode-group--advanced/);
   assert.match(app, /variant="advanced"/);
+  assert.match(app, /PrimaryNavigation/);
+  assert.match(app, /openNavigationTarget/);
   assert.match(css, /\.mode-card--advanced/);
+  assert.match(css, /\.primary-nav/);
+  assert.match(css, /\.nav-button--active/);
   assert.match(css, /border-style: dashed/);
+});
+
+test("demo mode uses the sample report route and cannot stay in the old infinite loading state", () => {
+  const app = read("src/App.tsx");
+  const client = read("src/api/client.ts");
+
+  assert.match(client, /getDemoReport\(\): Promise<HomeGuardReport>/);
+  assert.match(client, /"\/demo\/report"/);
+  assert.match(
+    app,
+    /Could not load the demo report\. Confirm the backend is running on port 8000\./,
+  );
+  assert.match(app, /setDemoReport\(\{ state: "loading" \}\)/);
+  assert.match(app, /setDemoReport\(\{ state: "ready", report \}\)/);
+  assert.match(app, /setDemoReport\(\{\s*state: "error",\s*message: demoReportUnavailableMessage,/s);
+  assert.doesNotMatch(app, /\[demoReport\.state,\s*flowStep\]/);
+});
+
+test("safety acknowledgement is versioned session-only state and does not persist answers or reports", () => {
+  const app = read("src/App.tsx");
+
+  assert.match(app, /ai-homeguard-safety-ack-v0\.1\.0/);
+  assert.match(app, /window\.sessionStorage\.setItem/);
+  assert.match(app, /JSON\.stringify\(\{ acknowledged: true, version: safetyAcknowledgementVersion \}\)/);
+  assert.match(app, /setPendingNavigation\(null\)/);
+  assert.doesNotMatch(app, /localStorage/);
+  assert.doesNotMatch(app, /sessionStorage\.setItem\([^)]*questionnaire/i);
+  assert.doesNotMatch(app, /sessionStorage\.setItem\([^)]*report/i);
+  assert.doesNotMatch(app, /sessionStorage\.setItem\([^)]*inventory/i);
+});
+
+test("runtime clarity separates browser hint, backend runtime, and container audit target", () => {
+  const localAuditPanel = read("src/components/LocalAuditPanel.tsx");
+  const app = read("src/App.tsx");
+  const css = read("src/styles/app.css");
+
+  [
+    "Browser/device hint",
+    "Backend runtime",
+    "Audit target",
+    "Container Runtime Detected",
+    "Your browser appears to be on macOS, but the backend is running in a Linux container.",
+    "For host-level macOS checks, run the backend natively with uv.",
+  ].forEach((label) => assert.match(localAuditPanel + app, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
+
+  assert.match(css, /\.runtime-detail-grid/);
+  assert.match(css, /\.runtime-warning/);
 });
 
 test("shared report review components cover summary, filters, empty, export, loading, and error states", () => {
@@ -109,9 +163,21 @@ test("required safety and privacy copy remains visible", () => {
     "No router login is performed.",
     "Do not enter router passwords.",
     "Review exports before sharing.",
-    "Backend unavailable",
+    "Backend connected",
+    "Confirm the backend is running on port 8000.",
     "unsupported-platform result",
   ].forEach((phrase) => assert.match(source, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
+});
+
+test("main user-facing safety copy does not use development slice terminology", () => {
+  const app = read("src/App.tsx");
+  const network = read("src/components/NetworkAwarenessPanel.tsx");
+
+  assert.doesNotMatch(app, /what this slice/i);
+  assert.doesNotMatch(app, /keeps this slice/i);
+  assert.doesNotMatch(network, /this slice uses/i);
+  assert.match(app, /What this version does and does not do/);
+  assert.match(network, /this version uses passive local network context only/);
 });
 
 test("forbidden overclaiming and remediation language is absent from frontend source", () => {

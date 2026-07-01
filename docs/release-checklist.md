@@ -1,80 +1,93 @@
-# Release Checklist
+# AI HomeGuard v0.1.0 Release Checklist
 
-- Repo name confirmed: `ai-homeguard`
-- Display name confirmed: AI HomeGuard
-- No secrets committed
-- `.env` and `.env.*` ignored
-- `.env.example` committed with placeholders only
-- Required docs present
-- Backend tests pass
-- Frontend build passes
-- Frontend tests pass
-- Home page makes Full HomeGuard Report the recommended path
-- Demo Mode, Local Device Audit, Home Security Questionnaire, Device Inventory Helper, and Local Network Awareness remain visible
-- Advanced/manual Windows, macOS, and Linux checks remain available but visually de-emphasized
-- Shared report review panel renders summary, counts, top actions, findings, safety notes, limitations, and export controls
-- Finding filters work for status, platform, evidence source, sorting, and show/hide good findings
-- Evidence source badges clearly distinguish questionnaire, local device, demo, passive network awareness, manual inventory, demo inventory, runtime context, and unsupported platform findings
-- D3FEND-informed guidance is labeled educational and not a guarantee
-- Technical details are collapsed or secondary by default
-- Loading, error, and empty states are text-visible and calm
-- Start Over and Clear Current Report clear in-memory frontend state only
-- Responsive layout smoke check passes on desktop, laptop, tablet-ish, and mobile-ish widths
-- Accessibility basics pass: heading structure, labels, clickable checkbox labels, visible focus states, text-visible status/error states, and no icon-only controls
-- Forbidden language review passes for automatic repair, compromise, certification, guarantee, offensive-test, exhaustive-scan, complete-security, or official-certification claims
-- Export review check passes: Markdown/JSON exports are user-triggered and copy reminds users to review exports before sharing
-- Docker build and smoke test pass
-- Finding/report model serialization tests pass
-- Demo report route validation passes
-- Demo dashboard build passes
-- Demo data clearly marked fake/static
-- Questionnaire routes return static questions and in-memory results
-- Questionnaire asks for no secrets, credentials, addresses, or personal identifiers
-- Questionnaire-derived findings use the existing finding/report model
-- Safety acknowledgement is UI-only and not persisted
-- Unified local device audit route validates auto-detection and dispatch behavior
-- Runtime context route avoids hostname strings, usernames, paths, environment variables, and secrets
-- Combined report route validates questionnaire-only and questionnaire-plus-local behavior
-- Combined report local audit requires authorization acknowledgement
-- Markdown export route validates user-triggered report rendering
-- JSON export route validates user-triggered report serialization
-- Guidance catalog route validates local D3FEND-informed catalog output
-- Guidance enrichment validates demo, questionnaire, local, combined, Markdown, and JSON report paths
-- No live MITRE/D3FEND remote fetch included
-- No certification, guarantee, or full-coverage guidance claims included
-- Network awareness authorization validation passes
-- Private/public network guardrail validation passes
-- Network awareness route validates passive-only report generation
-- Combined report validates optional authorized network awareness inclusion
-- Device inventory models validate optional IP/MAC fields and mask optional hints
-- Demo device inventory is deterministic, fake, and contains no real IPs, MACs, or hostnames
-- Device inventory analyzer validates unknown-device, smart-device, guest-device, old-device, and update-review findings
-- Device inventory report route validates manual/demo report generation
-- Combined report validates optional device inventory inclusion
-- Router guidance route returns generic vendor-neutral guidance
-- Router guidance includes no default router passwords, exploit instructions, router-login automation, or credential collection
-- No active scan, Nmap, ping sweep, port scan, packet capture, router credential, or public target feature included
-- No automatic device discovery, device fingerprinting, ARP scan, router login, or required hostname/IP/MAC fields included
-- Network privacy validation confirms MAC addresses and hostnames are not exposed by default
-- No report auto-save or backend persistence included
-- Docker limitation note appears when container runtime is detected
-- Windows local check route validates unsupported-platform behavior on macOS/Linux
-- Windows command runner uses allowlisted read-only commands
-- Windows local check tests use mocked command output and do not require Windows
-- Windows local admin output does not expose full usernames in user-facing findings
-- macOS local check route validates native macOS behavior or unsupported-platform behavior where applicable
-- macOS command runner uses allowlisted read-only commands
-- macOS local check tests use mocked command output for deterministic mappings
-- Linux local check route validates mocked Linux behavior and unsupported-platform behavior on macOS/Windows
-- Linux command runner uses allowlisted read-only commands
-- Linux local check tests use mocked command output and do not require a real Linux host
-- Docker validation documents that Docker sees the Linux container, not the Mac host
-- Manual platform routes remain available as advanced/debug options
-- No sudo/admin escalation commands included
-- No ClamAV file scans included
-- No network scan logic included yet
-- No Nmap integration included yet
-- No remediation/settings-change commands included yet
-- No AI provider code included yet
-- No unsupported feature claims
-- No tag movement
+Release target: v0.1.0 - Local Home Security Audit MVP
+
+## Project Metadata
+
+- [x] Repo name confirmed: `ai-homeguard`
+- [x] Display name confirmed: AI HomeGuard
+- [x] App family confirmed: Blanzy Labs
+- [x] Repo URL confirmed: `https://github.com/blanzy-labs/ai-homeguard`
+- [x] Default branch confirmed: `main`
+- [x] Release version set to `0.1.0`
+- [x] `.env` and `.env.*` ignored
+- [x] `.env.example` committed with placeholders only
+
+## Documentation
+
+- [x] README finalized for v0.1.0
+- [x] Disclaimer complete
+- [x] Security and privacy notes complete
+- [x] Architecture notes complete
+- [x] Local install notes complete
+- [x] Troubleshooting notes complete
+- [x] Release notes ready: `docs/release-notes/v0.1.0.md`
+- [x] Validation document ready: `docs/validation/v0.1.0-validation.md`
+- [x] Demo script ready: `docs/demo-script.md`
+- [x] Sample scenarios ready: `docs/sample-scenarios.md`
+
+## Validation
+
+- [x] Backend tests pass
+- [x] Frontend tests pass
+- [x] Frontend build passes
+- [x] Docker build passes
+- [x] Docker smoke checks pass
+- [x] Endpoint smoke checks pass
+- [ ] Manual UI smoke check complete - owner manual smoke found release-blocking issues; Slice 12A fixes require owner retest
+- [x] Release checklist result recorded in validation document
+
+## Safety and Privacy
+
+- [x] No secrets found
+- [x] No `.env` committed
+- [x] No active network scanning code added
+- [x] No Nmap execution path
+- [x] No ping sweep path
+- [x] No port scanning other devices
+- [x] No packet capture path
+- [x] No router login flow
+- [x] No credential collection
+- [x] No router password fields
+- [x] No public IP scanning
+- [x] No target scan fields
+- [x] No OpenAI/API provider calls
+- [x] No telemetry
+- [x] No database/report/questionnaire/inventory persistence
+- [x] Browser storage limited to versioned safety acknowledgement only
+- [x] No report auto-save to disk
+- [x] No remediation/settings changes
+- [x] No sudo/admin requirement for baseline behavior
+- [x] No automatic-repair buttons
+- [x] No certification, guarantee, or compromise-style overclaiming language
+- [x] D3FEND guidance labeled educational/informed
+- [x] Exports warn users to review before sharing
+- [x] Full MAC addresses and hostnames are not exposed by default
+
+## Feature Scope
+
+- [x] Demo Mode included
+- [x] Safety-first guided UX included
+- [x] Home security questionnaire included
+- [x] Questionnaire-derived findings included
+- [x] Read-only Windows local audit foundation included
+- [x] Read-only macOS local audit foundation included
+- [x] Read-only Linux local audit foundation included
+- [x] Unified local device audit with platform auto-detection included
+- [x] Combined HomeGuard report included
+- [x] Markdown and JSON export included
+- [x] D3FEND-informed defensive guidance catalog included
+- [x] Passive local network awareness foundation included
+- [x] Manual/demo device inventory helper included
+- [x] Router guidance included
+- [x] Report review experience included
+
+## GitHub Release
+
+- [x] GitHub metadata set
+- [x] v0.1.0 tag absent before creation
+- [x] v0.1.0 release absent before creation
+- [ ] Final release commit pushed to `main`
+- [ ] Annotated tag `v0.1.0` created and pushed
+- [ ] GitHub release created from `docs/release-notes/v0.1.0.md`
+- [ ] Final release verification complete

@@ -179,6 +179,10 @@ def test_docker_runtime_adds_container_limitation(monkeypatch) -> None:
 
     assert CONTAINER_LIMITATION_NOTE in report.safety_notes
     assert any("Detected runtime: linux docker" == note for note in report.safety_notes)
+    assert report.findings[0].id == "local-device-audit-container-runtime"
+    assert report.findings[0].home_title == "Container runtime detected"
+    assert "container environment instead of the host computer" in report.findings[0].summary
+    assert report.summary.review_count >= 1
 
 
 def test_unified_runner_safety_notes_include_boundaries(monkeypatch) -> None:

@@ -69,11 +69,15 @@ curl http://localhost:8000/health
 
 ## .env Is Not Loaded
 
-Slice 1 does not require a `.env` file. If you add one locally, keep it out of git and compare it with `.env.example`.
+v0.1.0 does not require a `.env` file. If you add one locally, keep it out of git and compare it with `.env.example`.
 
 ## Browser Shows a Stale Frontend
 
 Hard-refresh the browser tab, stop and restart the Vite dev server, or clear the browser cache for `localhost:5173`.
+
+## Safety Acknowledgement Appears Again
+
+AI HomeGuard stores only the versioned safety acknowledgement in `sessionStorage` for the current browser session. It does not store questionnaire answers, reports, device inventory entries, exports, or telemetry. If you close the browser session, clear site data, or use a private browsing window, the acknowledgement may appear again.
 
 ## Windows Checks Are Unavailable on Mac or Linux
 
@@ -81,7 +85,7 @@ Windows local checks only run when AI HomeGuard is running on a Windows computer
 
 ## Local Device Audit Picked the Wrong Host
 
-`/reports/local-device` detects the runtime where the backend process runs. If the backend is in Docker on a Mac, it usually detects Linux because the container is Linux. Run the backend directly with `uv run uvicorn app.main:app --reload` for host-level macOS checks.
+`/reports/local-device` detects the runtime where the backend process runs. If the backend is in Docker on a Mac, it usually detects Linux because the container is Linux. That is expected container visibility, not proof that the Mac host is Linux. Run the backend directly with `uv run uvicorn app.main:app --reload` for host-level macOS checks.
 
 ## macOS Checks Are Unavailable on Windows or Linux
 
@@ -97,7 +101,7 @@ Unsupported-platform results are expected when a platform-specific route is open
 
 ## Docker Platform Looks Different From the Host
 
-Docker Compose runs the backend inside a Linux container. On a Mac host, `/reports/macos-local` returns unsupported-platform output in Docker, and `/reports/linux-local` checks the container environment rather than the Mac. Run the backend natively with `uv run uvicorn app.main:app --reload` for true host macOS checks.
+Docker Compose runs the backend inside a Linux container. On a Mac host, `/runtime` and `/reports/local-device` may report Linux/container runtime visibility. `/reports/macos-local` returns unsupported-platform output in Docker, and `/reports/linux-local` checks the container environment rather than the Mac. Run the backend natively with `uv run uvicorn app.main:app --reload` for true host-level macOS checks.
 
 The `/runtime` route can help confirm what the backend sees. It returns privacy-safe runtime context without the hostname string.
 
@@ -171,11 +175,11 @@ When the backend runs in Docker, passive network context may describe the contai
 
 ## Network Awareness Shows No Passive Device Entries
 
-Slice 9 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list.
+v0.1.0 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list. Active private-network discovery is deferred to Slice 13 - Safe Private Network Discovery, which must require explicit authorization, private-network-only guardrails, no credential testing, no exploit logic, no packet capture, and no router login.
 
 ## Device Inventory Helper Has No Devices
 
-Slice 10 device inventory is manual/demo only. Add devices from your router app/device list or click the demo inventory button. AI HomeGuard does not automatically discover devices, scan the network, or log in to your router.
+v0.1.0 device inventory is manual/demo only. Add devices from your router app/device list or click the demo inventory button. AI HomeGuard does not automatically discover devices, scan the network, or log in to your router.
 
 ## Optional Device Hints Look Masked
 
@@ -207,7 +211,7 @@ Some routers or ISP-managed gateways do not support guest Wi-Fi or isolation. If
 
 ## Device Inventory Is Not Saved After Refresh
 
-Slice 10 does not persist manual inventory data. If you refresh the browser, restart the frontend, or close the session, re-enter the inventory or load the fake demo inventory again.
+v0.1.0 does not persist manual inventory data. If you refresh the browser, restart the frontend, or close the session, re-enter the inventory or load the fake demo inventory again.
 
 ## Review Exports Before Sharing
 
@@ -219,7 +223,7 @@ If local route or neighbor-cache commands are unavailable, AI HomeGuard returns 
 
 ## Public Scope Rejected
 
-AI HomeGuard does not support public target scanning. Future target/range inputs must pass private/local guardrails, and Slice 9 does not expose target inputs.
+AI HomeGuard does not support public target scanning. Future target/range inputs must pass private/local guardrails, and v0.1.0 does not expose target inputs.
 
 ## PowerShell Is Unavailable on Windows
 
@@ -227,7 +231,7 @@ The Windows check foundation uses read-only PowerShell commands for most checks.
 
 ## Permissions or Admin Limitations
 
-Slice 6 does not require administrator privileges for baseline behavior. Some Windows, macOS, or Linux details may have limited visibility without elevated rights. In that case AI HomeGuard reports limited visibility or `unable_to_check` instead of requesting elevation.
+v0.1.0 does not require administrator privileges for baseline behavior. Some Windows, macOS, or Linux details may have limited visibility without elevated rights. In that case AI HomeGuard reports limited visibility or `unable_to_check` instead of requesting elevation.
 
 ## Endpoint Security Blocks PowerShell
 

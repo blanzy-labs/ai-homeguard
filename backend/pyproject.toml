@@ -1,6 +1,6 @@
 [project]
 name = "ai-homeguard-backend"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "FastAPI backend for AI HomeGuard."
 readme = "../README.md"
 requires-python = ">=3.11,<3.15"

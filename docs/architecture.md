@@ -2,7 +2,7 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 11 Components
+## Current v0.1.0 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
@@ -15,11 +15,11 @@ AI HomeGuard uses a simple local-first web app structure.
 - Network awareness foundation: authorization model, private-network guardrails, passive local context service, network report runner, and safety policy route
 - Device inventory foundation: manual/demo inventory models, deterministic fake inventory, analyzer, report route, combined integration, and generic router guidance
 - Frontend: React, Vite, and TypeScript safety-first flow, recommended/secondary/advanced mode navigation, questionnaire, platform audit panels, network awareness, device inventory helper, shared report review components, results, and demo dashboard UI
-- Frontend tests: dependency-free Node tests covering Slice 11 navigation, report review contracts, source badges, guidance labels, safety copy, and forbidden overclaiming language
+- Frontend tests: dependency-free Node tests covering navigation, report review contracts, source badges, guidance labels, safety copy, and forbidden overclaiming language
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 11 adds frontend UX, copy, accessibility, responsive layout, and report review polish. It does not include active network scanning, automatic device discovery, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, router credential collection, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
+The v0.1.0 MVP includes frontend UX, copy, accessibility, responsive layout, and report review polish. It does not include active network scanning, automatic device discovery, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, router credential collection, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
 
 ## Finding and Report Model
 
@@ -90,7 +90,7 @@ Later slices may add AI-assisted summaries generated from the same report model 
 
 ## Frontend Report Review Flow
 
-Slice 11 consolidates report rendering around reusable frontend components:
+v0.1.0 consolidates report rendering around reusable frontend components:
 
 - `ReportReviewPanel`: shared report shell for demo, questionnaire, combined, local device, network awareness, and device inventory reports
 - `ReportSummaryCard`: calm overall posture label, score, disclaimer, and report context
@@ -112,11 +112,11 @@ mode picker -> visually de-emphasized advanced/manual platform paths
 report source -> ReportReviewPanel -> user-triggered Markdown/JSON export
 ```
 
-The report review flow keeps technical evidence collapsed by default, shows safety notes and limitations near export, and provides in-memory Start Over and Clear Current Report actions. These actions clear React state only; they do not delete files, call cleanup commands, or change local settings.
+The report review flow keeps technical evidence collapsed by default, shows safety notes and limitations near export, and provides Start Over and Clear Current Report actions. These actions clear in-memory report/form state only; they do not delete files, call cleanup commands, reset the versioned safety acknowledgement, or change local settings.
 
 ## Evidence Source Labels
 
-Slice 11 normalizes user-facing evidence labels in `frontend/src/components/reportLabels.ts` so the UI does not imply manual or questionnaire findings were automatically detected.
+v0.1.0 normalizes user-facing evidence labels in `frontend/src/components/reportLabels.ts` so the UI does not imply manual or questionnaire findings were automatically detected.
 
 Current labels include:
 
@@ -129,11 +129,13 @@ Current labels include:
 - `demo_inventory`: Demo Device Inventory
 - `network_awareness`: Passive Network Awareness
 
-The backend evidence sources remain deterministic and privacy-safe. The frontend derives labels from existing evidence and tags; Slice 11 does not add backend check behavior.
+The backend evidence sources remain deterministic and privacy-safe. The frontend derives labels from existing evidence and tags without adding backend check behavior.
 
 ## Frontend State and Persistence
 
-The React app keeps questionnaire answers, selected combined-report options, device inventory entries, current reports, and export status in memory only. It does not use `localStorage`, `sessionStorage`, IndexedDB, cookies, a database, or telemetry. Refreshing the browser clears in-memory answers and reports.
+The React app keeps questionnaire answers, selected combined-report options, device inventory entries, current reports, and export status in memory only. It does not use `localStorage`, IndexedDB, cookies, a database, or telemetry for answers, reports, inventory entries, exports, scan data, or secrets. Refreshing the browser clears in-memory answers and reports.
+
+The only browser storage used by v0.1.0 is `sessionStorage` key `ai-homeguard-safety-ack-v0.1.0`, which stores a versioned safety acknowledgement for the current browser session. It prevents repeated safety acknowledgement prompts during normal navigation and does not contain questionnaire answers, report content, device inventory entries, IP/MAC data, hostnames, router information, exports, secrets, or telemetry IDs.
 
 Exports are created only when the user clicks Export Markdown or Export JSON. Export generation posts the current in-memory `HomeGuardReport` to the local backend export endpoint and downloads the returned content in the browser. The frontend does not auto-save exports.
 
@@ -184,7 +186,7 @@ The guardrails classify RFC1918 IPv4 ranges, loopback, link-local, public IPs, I
 
 The passive context service may read local route and neighbor-cache information through allowlisted read-only commands such as `route -n get default`, `netstat -rn`, `arp -a`, `ip route`, `ip neigh show`, `ipconfig`, and `route print`. These commands are used only for local passive context; they do not send discovery packets, scan ports, run Nmap, capture packets, log in to routers, or test credentials. User-facing output summarizes counts and private-context presence, not full MAC addresses or hostnames.
 
-In Docker, network context may describe the container network rather than the host or home network. Future active private-network discovery may be considered later with strict guardrails and explicit authorization, but it is not part of the current v0.1.0 slice set.
+In Docker, network context may describe the container network rather than the host or home network. Slice 13 - Safe Private Network Discovery is a deferred follow-up for a future version with explicit authorization, private IPv4 ranges only, no public targets, user-controlled safe discovery, no credential testing, no exploit logic, no packet capture, no router login, clear cancel/timeout behavior, and transparent results. It is not part of v0.1.0.
 
 ## Device Inventory and Router Guidance Foundation
 
@@ -211,7 +213,7 @@ The inventory model does not require hostname, IP address, MAC address, owner na
 
 Router guidance is generic and vendor-neutral. It helps users review connected devices, unknown devices, guest Wi-Fi, router firmware, Wi-Fi security, remote administration, and router admin hygiene without providing exploit instructions, default router passwords, router bypass guidance, credential collection, or router login automation.
 
-Future active discovery may be considered only in a later slice with explicit authorization, strict private-network guardrails, and a separate safety review. It is not part of the current v0.1.0 slice set.
+Future active discovery may be considered only in Slice 13 or later with explicit authorization, strict private-network guardrails, and a separate safety review. It is not part of v0.1.0.
 
 ## Platform Check Architecture
 
@@ -246,7 +248,7 @@ Unified local audit flow:
 frontend -> GET /reports/local-device -> local_runner -> platform-specific runner -> HomeGuardReport
 ```
 
-The unified runner reads privacy-safe runtime context, calls exactly one matching platform runner, attaches runtime context to the report, recomputes summary counts, and appends safety notes. In Docker, it adds a container limitation note because the backend sees the container operating system rather than the host.
+The unified runner reads privacy-safe runtime context, calls exactly one matching platform runner, attaches runtime context to the report, recomputes summary counts, and appends safety notes. In Docker, it adds a container runtime finding and limitation note because the backend sees the container operating system rather than the host. Docker on a Mac may therefore report Linux container runtime visibility; for host-level macOS checks, run the backend natively with uv.
 
 Runtime context route:
 

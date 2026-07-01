@@ -12,7 +12,7 @@ def authorized(scope: NetworkAuthorizationScope = NetworkAuthorizationScope.HOME
     return NetworkAuthorization(
         acknowledged=True,
         scope=scope,
-        statement_version="v0.1.0-slice-9",
+        statement_version="v0.1.0-network-awareness",
     )
 
 
@@ -41,7 +41,7 @@ def test_authorization_false_prevents_context_gathering(monkeypatch) -> None:
             NetworkAuthorization(
                 acknowledged=False,
                 scope=NetworkAuthorizationScope.HOME_NETWORK,
-                statement_version="v0.1.0-slice-9",
+                statement_version="v0.1.0-network-awareness",
             )
         )
 

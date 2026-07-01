@@ -12,6 +12,6 @@ def test_version() -> None:
     assert response.json() == {
         "app": "AI HomeGuard",
         "repo": "ai-homeguard",
-        "version": "0.1.0-dev",
+        "version": "0.1.0",
         "family": "Blanzy Labs",
     }

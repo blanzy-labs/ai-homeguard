@@ -9,7 +9,7 @@ router = APIRouter(tags=["network awareness"])
 
 NETWORK_AUTHORIZATION_STATEMENT = (
     "I confirm this is my own home network or a network I am authorized to assess. "
-    "I understand Slice 9 uses passive local network context only."
+    "I understand this version uses passive local network context only."
 )
 
 
@@ -40,8 +40,8 @@ def read_network_safety_policy() -> NetworkSafetyPolicy:
         ],
         private_network_only="Future discovery features must be limited to private/local ranges.",
         no_public_scanning="AI HomeGuard does not support public target scanning.",
-        no_active_scanning="Slice 9 performs passive local network awareness only.",
-        statement_version="v0.1.0-slice-9",
+        no_active_scanning="This version performs passive local network awareness only.",
+        statement_version="v0.1.0-network-awareness",
     )
 
 

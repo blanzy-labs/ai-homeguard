@@ -112,7 +112,7 @@ def test_report_enrichment_adds_guidance_to_findings_lacking_it() -> None:
     report = HomeGuardReport(
         report_id="guidance-report",
         app="AI HomeGuard",
-        version="0.1.0-dev",
+        version="0.1.0",
         generated_at=datetime(2026, 7, 1, 12, 0, tzinfo=UTC),
         mode=ReportMode.LOCAL,
         platform_scope=[Platform.WINDOWS],

@@ -81,7 +81,7 @@ def validate_network_scope(targets_or_ranges: list[str]) -> NetworkScopeValidati
         safety_notes=[
             "Only private local ranges are allowed for future local network checks.",
             "Public IPs, hostnames, domains, and unsupported values are rejected.",
-            "Slice 9 does not run active discovery or port scanning.",
+            "This version does not run active discovery or port scanning.",
         ],
     )
 

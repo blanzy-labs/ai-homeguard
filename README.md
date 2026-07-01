@@ -1,292 +1,85 @@
 # AI HomeGuard
 
-AI HomeGuard is a local-first Blanzy Labs AI app for defensive home cyber hygiene. It helps home users understand and improve basic cybersecurity posture through safe local checks, plain-English risk explanations, and D3FEND-informed defensive guidance.
+AI HomeGuard is a local-first home cyber hygiene app with read-only local checks, questionnaire-guided review, device inventory guidance, passive network awareness, and D3FEND-informed defensive guidance. It is part of the Blanzy Labs AI app family.
 
 Repository: https://github.com/blanzy-labs/ai-homeguard
 
-## Status
+Release: v0.1.0 - Local Home Security Audit MVP
 
-Current slice: Slice 11 - HomeGuard UX Polish and Report Review Experience.
+## What It Does
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, a manual/demo device inventory helper with generic router guidance, Docker Compose wiring, Slice 11 report review UX polish, and project documentation.
+AI HomeGuard helps home users review common security basics in a calm, local-first workflow:
 
-The v0.1.0 target is the Local Home Security Audit MVP.
+- Demo Mode with fake sample findings
+- Safety-first guided UX and authorization acknowledgements
+- Home security questionnaire
+- Questionnaire-derived findings
+- Read-only Windows local audit foundation
+- Read-only macOS local audit foundation
+- Read-only Linux local audit foundation
+- Unified local device audit with platform auto-detection
+- Combined HomeGuard report
+- Markdown and JSON export
+- D3FEND-informed defensive guidance catalog
+- Passive local network awareness foundation
+- Manual/demo device inventory helper
+- Generic router guidance
+- Report review experience with top actions, findings, filters, evidence source labels, limitations, safety notes, and export controls
 
 ## Safety Boundaries
 
-AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
+AI HomeGuard is a defensive local review tool. It does not exploit, attack, brute-force, packet-sniff, inspect public targets, or change settings.
 
-Slice 11 is UX/report-review polish only. It does not add new security checks or active discovery.
+v0.1.0 does not include:
 
-Slice 11 does not include:
-
-- Active network scanning
-- Nmap integration
+- Active network discovery
+- Nmap
 - Ping sweeps
-- Port scanning
-- Device fingerprinting
+- Port scanning other devices
 - Packet capture
-- Router login or credential testing
-- Router credential fields
-- Automatic device discovery
+- Router login
+- Credential collection or credential testing
 - Public target scanning
-- OpenAI or other AI provider calls
-- Live MITRE/D3FEND data fetching at runtime
-- Telemetry, login, cloud storage, or database persistence
-- Remediation, automatic repair, or settings changes
-- sudo or administrator escalation
-- ClamAV file scans
-- Automatic report saving
+- Automatic remediation or settings changes
+- sudo or administrator escalation for baseline behavior
+- AI provider calls
+- External uploads
+- Telemetry
+- Database persistence
+- Browser persistence of questionnaire answers, device inventory entries, reports, or exports
+- Report auto-save
+- Hosted SaaS behavior
 
-Windows, macOS, and Linux checks are read-only and only execute when AI HomeGuard is running on the matching operating system. Unsupported platform routes return an informational report without running commands for the wrong platform.
+Reports and exports may include questionnaire answers, manual inventory labels, and local audit evidence. Review exports before sharing.
 
-The unified local device audit auto-detects the runtime platform and calls the matching Windows, macOS, or Linux runner. If the backend is running inside Docker, results may reflect the container environment rather than the host computer.
+The frontend may store only a versioned safety acknowledgement in `sessionStorage` for the current browser session so users do not have to accept the same safety terms repeatedly. It does not store questionnaire answers, reports, device inventory entries, secrets, exports, or telemetry.
 
-The combined report can merge questionnaire-derived findings with optional read-only local device audit findings. Exports are user-triggered only and are not saved automatically or uploaded.
+## Limitations
 
-Local Network Awareness is authorization-gated and passive only. It may summarize local runtime/router context and passive cache counts, but it does not run active discovery, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, or public target scanning. Authorization is request-level only and is not stored.
+AI HomeGuard v0.1.0 is not a penetration test, compliance tool, security certification, vulnerability scanner certification, router audit, or guarantee of safety.
 
-Device Inventory Helper is manual/demo only. It helps users compare devices from their router app/admin page with a simple privacy-safe inventory. It does not discover devices automatically, scan the network, log in to routers, ask for router credentials, require IP addresses, require MAC addresses, require hostnames, upload data, persist inventory, or save reports automatically. Optional MAC/IP hints are masked by the backend if provided.
+Checks are best-effort and platform-dependent. Windows, macOS, and Linux checks only run on matching operating systems. Docker may reflect the Linux container environment rather than the host computer. If Docker is running on a Mac, the backend may correctly report a Linux container runtime; for true host-level macOS checks, run the backend natively with `uv`. Windows and Linux behavior is covered by mocked validation in this development environment and should be further validated on native systems.
 
-The demo dashboard uses fake sample findings only. D3FEND-informed guidance comes from a small local curated educational catalog and explicit finding guidance. It is not official D3FEND coverage, certification, or a guarantee of security. Optional ATT&CK context is educational only.
+Passive network awareness may be incomplete. Manual device inventory depends on user-provided or router app information. v0.1.0 does not actively discover devices on the network. Slice 13 - Safe Private Network Discovery is deferred for a future version with explicit authorization, private-network-only guardrails, user control, timeouts, transparent results, no credential testing, no exploit logic, no packet capture, and no router login. D3FEND-informed guidance is educational and does not represent official D3FEND certification or full D3FEND coverage.
 
 See [docs/disclaimer.md](docs/disclaimer.md) and [docs/security-and-privacy.md](docs/security-and-privacy.md).
 
 ## Recommended App Flow
 
-The home screen makes Full HomeGuard Report the recommended path. It starts with the Home Security Questionnaire and can optionally include read-only local device checks, passive local network awareness, and manual/demo device inventory findings.
+The recommended path is Full HomeGuard Report:
 
-Secondary paths remain available when you want one source at a time:
+1. Start the guided flow.
+2. Review the safety boundaries.
+3. Answer the Home Security Questionnaire.
+4. Optionally include read-only local checks, passive network awareness, and manual/demo inventory findings.
+5. Review top actions, findings, evidence source labels, limitations, and D3FEND-informed guidance.
+6. Export Markdown or JSON only when you choose to.
 
-- Demo Mode
-- Local Device Audit
-- Home Security Questionnaire
-- Local Network Awareness
-- Device Inventory Helper
-- Defensive Guidance Catalog
+Secondary paths remain available for Demo Mode, Local Device Audit, Home Security Questionnaire, Local Network Awareness, Device Inventory Helper, and Defensive Guidance Catalog.
 
-Advanced/manual platform routes remain available but are visually de-emphasized:
+Advanced/manual routes remain available for Windows Device Audit, macOS Device Audit, and Linux Device Audit.
 
-- Windows Device Audit
-- macOS Device Audit
-- Linux Device Audit
-
-Reports use a shared review experience with overall posture, status counts, top actions, source-labeled findings, filters, collapsed technical details, D3FEND-informed defensive guidance, safety notes, limitations, and user-triggered Markdown/JSON exports. Review exports before sharing.
-
-## Demo and Questionnaire API
-
-Deterministic demo report:
-
-```bash
-curl http://localhost:8000/demo/report
-```
-
-Questionnaire routes:
-
-```bash
-curl http://localhost:8000/questionnaire
-```
-
-- `GET /questionnaire`
-- `POST /questionnaire/evaluate`
-- `POST /reports/questionnaire`
-- `GET /questionnaire/demo-answers`
-
-Demo aliases:
-
-- `GET /demo/findings`
-- `GET /reports/demo`
-
-These endpoints return static questions, fake demo data, or questionnaire-derived findings. They do not run local commands, inspect the device, scan the network, call an AI provider, upload data, or persist questionnaire answers.
-
-## Local Audit APIs
-
-Slice 6 provides one primary auto-detected local device audit endpoint plus platform-specific manual endpoints:
-
-```bash
-curl http://localhost:8000/reports/local-device
-curl http://localhost:8000/reports/windows-local
-curl http://localhost:8000/reports/macos-local
-curl http://localhost:8000/reports/linux-local
-curl http://localhost:8000/runtime
-```
-
-Additional route:
-
-- `GET /checks/windows`
-
-Unified route behavior:
-
-- `GET /reports/local-device` detects the runtime platform and calls the matching Windows, macOS, or Linux runner
-- Unknown platforms return a safe `unable_to_check` report without running platform commands
-- Docker/container runtime adds a limitation note that checks may reflect the container rather than the host
-- `GET /runtime` returns privacy-safe runtime context without hostname strings, usernames, personal paths, environment variables, or secrets
-
-Windows check scope:
-
-- Microsoft Defender status
-- Windows Firewall profile status
-- BitLocker or device encryption status
-- Remote Desktop status
-- Local listening ports summary
-- Local Administrators group summary
-- Light Windows version/update visibility
-
-macOS check scope:
-
-- Application Firewall status
-- FileVault status
-- Gatekeeper status
-- Remote Login status
-- Local listening TCP port summary
-- Light macOS version/update visibility
-
-Linux check scope:
-
-- Common firewall status from UFW/firewalld visibility
-- SSH service status
-- Local listening port summary
-- ClamAV presence via version commands only
-- Light Linux distribution/kernel and update visibility
-- Cautious disk encryption visibility from limited `lsblk -f` output
-
-Safety boundaries:
-
-- Read-only checks only
-- No settings changed
-- No remediation attempted
-- No network scans
-- No AI calls
-- No persistence
-- No sudo/admin escalation
-- No ClamAV file scans
-- No local administrator usernames exposed in user-facing output
-- No usernames, file paths, process command arguments, passwords, tokens, or secrets collected from listening-port checks
-
-When a platform route is called from the wrong operating system, AI HomeGuard returns an unsupported-platform report with `unable_to_check` findings and does not execute that platform's commands.
-
-## Combined Report and Export APIs
-
-Combined report:
-
-```bash
-curl -X POST http://localhost:8000/reports/combined
-```
-
-Export routes:
-
-- `POST /reports/export/markdown`
-- `POST /reports/export/json`
-
-Combined reports can include:
-
-- Questionnaire-derived findings
-- Optional local device audit findings after authorization acknowledgement
-- Optional passive local network awareness findings after authorization acknowledgement
-- Optional manual/demo device inventory findings
-- Existing safety notes, runtime context, D3FEND-informed guidance, and top actions
-
-Exports:
-
-- Are user-triggered only
-- Are returned as Markdown or JSON
-- Are not saved automatically by the backend
-- Are not uploaded to any external service
-- May include questionnaire answers and local audit evidence, so review before sharing
-
-## Defensive Guidance API
-
-Slice 8 adds a local deterministic D3FEND-informed guidance layer:
-
-```bash
-curl http://localhost:8000/knowledge/d3fend-guidance
-curl http://localhost:8000/knowledge/d3fend-guidance/enable_host_firewall
-```
-
-Routes:
-
-- `GET /knowledge/d3fend-guidance`
-- `GET /knowledge/d3fend-guidance/{guidance_id}`
-
-The catalog is bundled with the app and is used to enrich demo, questionnaire, local device, combined, Markdown, and JSON reports. It does not fetch live MITRE data, call an AI provider, upload data, persist reports, or claim complete D3FEND coverage.
-
-## Local Network Awareness APIs
-
-Safety policy:
-
-```bash
-curl http://localhost:8000/network/safety-policy
-```
-
-Network awareness report:
-
-```bash
-curl -X POST http://localhost:8000/reports/network-awareness \
-  -H "Content-Type: application/json" \
-  -d '{"acknowledged":true,"scope":"home_network","statement_version":"v0.1.0-slice-9"}'
-```
-
-Routes:
-
-- `GET /network/safety-policy`
-- `POST /reports/network-awareness`
-
-Combined reports can also include network awareness by setting `include_network_awareness: true` and passing `network_authorization` with acknowledged `home_network` or `demo` scope.
-
-Network awareness boundaries:
-
-- Authorization required
-- Passive/local context only
-- No active discovery
-- No Nmap
-- No ping sweeps
-- No port scanning
-- No public target scanning
-- No router login
-- No packet capture
-- No persistence or upload
-- Full MAC addresses and hostnames are not shown by default
-
-## Device Inventory and Router Guidance APIs
-
-Demo/manual inventory:
-
-```bash
-curl http://localhost:8000/inventory/demo
-curl http://localhost:8000/router/guidance
-```
-
-Device inventory report:
-
-```bash
-curl -X POST http://localhost:8000/reports/device-inventory \
-  -H "Content-Type: application/json" \
-  -d '{"mode":"manual","acknowledged_manual":true,"devices":[]}'
-```
-
-Routes:
-
-- `GET /inventory/demo`
-- `POST /inventory/analyze`
-- `POST /reports/device-inventory`
-- `GET /router/guidance`
-
-Combined reports can include manual/demo inventory by setting `include_device_inventory: true` and passing `device_inventory_submission`.
-
-Device inventory boundaries:
-
-- Manual/demo data only
-- No active discovery
-- No scan buttons or scan endpoints
-- No Nmap, ping, ARP scan, port scan, or packet capture
-- No router login
-- No router credentials requested
-- No public target scanning
-- No persistence, upload, telemetry, database, or AI provider call
-- No IP, MAC, hostname, personal name, exact room, or serial number required
-- Full MAC addresses are masked if optional hints are provided
-
-## Local Install
+## Install
 
 Prerequisites:
 
@@ -294,7 +87,7 @@ Prerequisites:
 - uv
 - Node.js
 - pnpm
-- Docker Desktop with Docker Compose
+- Docker Desktop or Docker Engine with Docker Compose
 
 Clone:
 
@@ -326,12 +119,19 @@ docker compose build
 docker compose up -d
 ```
 
-Expected URLs:
+Stop Docker services:
+
+```bash
+docker compose down
+```
+
+## Expected URLs
 
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
 - Health: http://localhost:8000/health
 - Version: http://localhost:8000/version
+- API docs: http://localhost:8000/docs
 - Demo report: http://localhost:8000/demo/report
 - Questionnaire: http://localhost:8000/questionnaire
 - Local device report: http://localhost:8000/reports/local-device
@@ -343,7 +143,62 @@ Expected URLs:
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
-- API docs: http://localhost:8000/docs
+
+The `/version` endpoint should return:
+
+```json
+{
+  "app": "AI HomeGuard",
+  "repo": "ai-homeguard",
+  "version": "0.1.0",
+  "family": "Blanzy Labs"
+}
+```
+
+## API Summary
+
+Demo and questionnaire:
+
+- `GET /demo/report`
+- `GET /questionnaire`
+- `POST /questionnaire/evaluate`
+- `POST /reports/questionnaire`
+- `GET /questionnaire/demo-answers`
+
+Local audit:
+
+- `GET /runtime`
+- `GET /reports/local-device`
+- `GET /reports/windows-local`
+- `GET /reports/macos-local`
+- `GET /reports/linux-local`
+
+Combined reports and exports:
+
+- `POST /reports/combined`
+- `POST /reports/export/markdown`
+- `POST /reports/export/json`
+
+D3FEND-informed guidance:
+
+- `GET /knowledge/d3fend-guidance`
+- `GET /knowledge/d3fend-guidance/{guidance_id}`
+
+Network awareness:
+
+- `GET /network/safety-policy`
+- `POST /reports/network-awareness`
+
+Device inventory and router guidance:
+
+- `GET /inventory/demo`
+- `POST /inventory/analyze`
+- `POST /reports/device-inventory`
+- `GET /router/guidance`
+
+## Exports
+
+Markdown and JSON exports are user-triggered only. The backend returns export content to the browser or caller; it does not save a copy, upload it, or persist report history.
 
 ## Development Commands
 
@@ -354,41 +209,30 @@ cd backend
 uv run pytest
 ```
 
-Frontend build:
-
-```bash
-cd frontend
-pnpm build
-```
-
-Frontend tests:
+Frontend tests and build:
 
 ```bash
 cd frontend
 pnpm test
+pnpm build
 ```
 
-Docker smoke test:
+Docker smoke:
 
 ```bash
+docker compose build
 docker compose up -d
 curl http://localhost:8000/health
 curl http://localhost:8000/version
-curl http://localhost:8000/questionnaire
 curl http://localhost:8000/demo/report
-curl http://localhost:8000/runtime
+curl http://localhost:8000/questionnaire
+curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/knowledge/d3fend-guidance
 curl http://localhost:8000/network/safety-policy
 curl http://localhost:8000/inventory/demo
 curl http://localhost:8000/router/guidance
-curl http://localhost:8000/reports/local-device
-curl http://localhost:8000/reports/windows-local
-curl http://localhost:8000/reports/macos-local
-curl http://localhost:8000/reports/linux-local
 docker compose down
 ```
-
-Docker note: the backend runs inside a Linux container. In Docker, `/reports/local-device` and `/reports/linux-local` reflect the container environment rather than the Mac host, and `/reports/macos-local` returns unsupported-platform output. Run the backend natively for true host macOS checks.
 
 ## Documentation
 
@@ -398,17 +242,10 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Release Checklist](docs/release-checklist.md)
 - [Disclaimer](docs/disclaimer.md)
 - [Security and Privacy](docs/security-and-privacy.md)
-- [Slice 1 Prerequisite Validation](docs/validation/slice-1-prerequisites.md)
-- [Slice 2 Validation](docs/validation/slice-2-validation.md)
-- [Slice 3 Validation](docs/validation/slice-3-validation.md)
-- [Slice 4 Validation](docs/validation/slice-4-validation.md)
-- [Slice 5 Validation](docs/validation/slice-5-validation.md)
-- [Slice 6 Validation](docs/validation/slice-6-validation.md)
-- [Slice 7 Validation](docs/validation/slice-7-validation.md)
-- [Slice 8 Validation](docs/validation/slice-8-validation.md)
-- [Slice 9 Validation](docs/validation/slice-9-validation.md)
-- [Slice 10 Validation](docs/validation/slice-10-validation.md)
-- [Slice 11 Validation](docs/validation/slice-11-validation.md)
+- [Demo Script](docs/demo-script.md)
+- [Sample Scenarios](docs/sample-scenarios.md)
+- [v0.1.0 Release Notes](docs/release-notes/v0.1.0.md)
+- [v0.1.0 Validation](docs/validation/v0.1.0-validation.md)
 
 ## License
 

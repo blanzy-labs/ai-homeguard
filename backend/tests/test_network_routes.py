@@ -12,7 +12,7 @@ def test_network_safety_policy_returns_200() -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["statement_version"] == "v0.1.0-slice-9"
+    assert payload["statement_version"] == "v0.1.0-network-awareness"
     assert "home_network" in payload["allowed_scopes"]
     assert "Nmap" in payload["disallowed_actions"]
     assert "public" in payload["no_public_scanning"].lower()
@@ -23,7 +23,7 @@ def test_network_awareness_without_acknowledgement_returns_400() -> None:
 
     response = client.post(
         "/reports/network-awareness",
-        json={"acknowledged": False, "scope": "home_network", "statement_version": "v0.1.0-slice-9"},
+        json={"acknowledged": False, "scope": "home_network", "statement_version": "v0.1.0-network-awareness"},
     )
 
     assert response.status_code == 400
@@ -41,7 +41,7 @@ def test_network_awareness_with_acknowledgement_returns_report(monkeypatch) -> N
 
     response = client.post(
         "/reports/network-awareness",
-        json={"acknowledged": True, "scope": "home_network", "statement_version": "v0.1.0-slice-9"},
+        json={"acknowledged": True, "scope": "home_network", "statement_version": "v0.1.0-network-awareness"},
     )
 
     assert response.status_code == 200
@@ -53,7 +53,7 @@ def test_network_awareness_rejects_device_only_scope() -> None:
 
     response = client.post(
         "/reports/network-awareness",
-        json={"acknowledged": True, "scope": "device_only", "statement_version": "v0.1.0-slice-9"},
+        json={"acknowledged": True, "scope": "device_only", "statement_version": "v0.1.0-network-awareness"},
     )
 
     assert response.status_code == 400

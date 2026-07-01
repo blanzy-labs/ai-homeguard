@@ -93,7 +93,7 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
     combined.safety_notes = _combined_safety_notes(combined.safety_notes)
     limitations.extend(
         [
-            "No active network discovery or port scanning is included in Slice 9.",
+            "No active network discovery or port scanning is included in this version.",
             "Exports are generated only when requested and are not saved automatically.",
         ]
     )

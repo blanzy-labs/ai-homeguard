@@ -55,6 +55,19 @@ type FlowStep =
   | "macos"
   | "linux";
 
+type NavigationTarget =
+  | "welcome"
+  | "mode"
+  | "demo"
+  | "full-report"
+  | "local"
+  | "questionnaire"
+  | "network"
+  | "inventory"
+  | "guidance"
+  | "advanced"
+  | "review";
+
 type ReportState =
   | { state: "idle" }
   | { state: "loading" }
@@ -92,7 +105,15 @@ type RouterGuidanceState =
   | { state: "error"; message: string };
 
 const dockerRuntimeNote =
-  "If running in Docker, results may reflect the container rather than the host computer.";
+  "AI HomeGuard appears to be running inside a container. Local checks may reflect the container environment rather than the host computer.";
+
+const nativeMacInstruction = "For host-level macOS checks, run the backend natively with uv.";
+
+const safetyAcknowledgementVersion = "0.1.0";
+const safetyAcknowledgementStorageKey = "ai-homeguard-safety-ack-v0.1.0";
+const networkAwarenessStatementVersion = "v0.1.0-network-awareness";
+const demoReportUnavailableMessage =
+  "Could not load the demo report. Confirm the backend is running on port 8000.";
 
 function createEmptyDeviceInventorySubmission(): DeviceInventorySubmission {
   return {
@@ -103,9 +124,76 @@ function createEmptyDeviceInventorySubmission(): DeviceInventorySubmission {
   };
 }
 
+function readSafetyAcknowledgement() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    const stored = window.sessionStorage.getItem(safetyAcknowledgementStorageKey);
+    if (!stored) {
+      return false;
+    }
+    const parsed = JSON.parse(stored) as { acknowledged?: boolean; version?: string };
+    return parsed.acknowledged === true && parsed.version === safetyAcknowledgementVersion;
+  } catch {
+    return false;
+  }
+}
+
+function writeSafetyAcknowledgement(acknowledged: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    if (acknowledged) {
+      window.sessionStorage.setItem(
+        safetyAcknowledgementStorageKey,
+        JSON.stringify({ acknowledged: true, version: safetyAcknowledgementVersion }),
+      );
+    } else {
+      window.sessionStorage.removeItem(safetyAcknowledgementStorageKey);
+    }
+  } catch {
+    // Storage can be unavailable in private or locked-down browser sessions.
+  }
+}
+
+type NavigatorWithUserAgentData = Navigator & {
+  userAgentData?: {
+    platform?: string;
+  };
+};
+
+function getBrowserPlatformHint() {
+  if (typeof navigator === "undefined") {
+    return null;
+  }
+  const browserNavigator = navigator as NavigatorWithUserAgentData;
+  const platform = browserNavigator.userAgentData?.platform ?? browserNavigator.platform ?? "";
+  const normalized = platform.toLowerCase();
+  if (normalized.includes("mac")) {
+    return "macOS";
+  }
+  if (normalized.includes("win")) {
+    return "Windows";
+  }
+  if (normalized.includes("linux")) {
+    return "Linux";
+  }
+  if (normalized.includes("iphone") || normalized.includes("ipad") || normalized.includes("ios")) {
+    return "iOS";
+  }
+  if (normalized.includes("android")) {
+    return "Android";
+  }
+  return platform || null;
+}
+
 export default function App() {
   const [flowStep, setFlowStep] = useState<FlowStep>("welcome");
-  const [acknowledged, setAcknowledged] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(readSafetyAcknowledgement);
+  const [pendingNavigation, setPendingNavigation] = useState<NavigationTarget | null>(null);
+  const [browserPlatformHint] = useState(getBrowserPlatformHint);
   const [demoReport, setDemoReport] = useState<ReportState>({ state: "idle" });
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireState>({ state: "idle" });
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
@@ -135,12 +223,17 @@ export default function App() {
   const [isSubmittingQuestionnaire, setIsSubmittingQuestionnaire] = useState(false);
 
   useEffect(() => {
+    writeSafetyAcknowledgement(acknowledged);
+  }, [acknowledged]);
+
+  useEffect(() => {
+    if (flowStep !== "demo" || demoReport.state !== "idle") {
+      return;
+    }
+
     let isMounted = true;
 
     async function loadDemoReport() {
-      if (flowStep !== "demo" || demoReport.state !== "idle") {
-        return;
-      }
       setDemoReport({ state: "loading" });
       setExportStatus(null);
       try {
@@ -152,7 +245,7 @@ export default function App() {
         if (isMounted) {
           setDemoReport({
             state: "error",
-            message: error instanceof Error ? error.message : "Demo report unavailable",
+            message: demoReportUnavailableMessage,
           });
         }
       }
@@ -163,7 +256,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [demoReport.state, flowStep]);
+  }, [flowStep]);
 
   async function openQuestionnaire() {
     setFlowStep("questionnaire");
@@ -330,7 +423,7 @@ export default function App() {
           ? {
               acknowledged: combinedNetworkAcknowledged,
               scope: "home_network",
-              statement_version: "v0.1.0-slice-9",
+              statement_version: networkAwarenessStatementVersion,
             }
           : null,
         device_inventory_submission: includeDeviceInventoryInCombined ? deviceInventorySubmission : null,
@@ -389,7 +482,7 @@ export default function App() {
       const report = await getNetworkAwarenessReport({
         acknowledged: true,
         scope: "home_network",
-        statement_version: "v0.1.0-slice-9",
+        statement_version: networkAwarenessStatementVersion,
       });
       setNetworkReport({ state: "ready", report });
     } catch (error) {
@@ -503,45 +596,23 @@ export default function App() {
 
   function clearCurrentReport() {
     setExportStatus(null);
-    let shouldReturnToModes = false;
-    if (flowStep === "demo") {
-      setDemoReport({ state: "idle" });
-      shouldReturnToModes = true;
-    }
-    if (flowStep === "results") {
-      setQuestionnaireReport({ state: "idle" });
-      shouldReturnToModes = true;
-    }
-    if (flowStep === "combined-results") {
-      setCombinedReport({ state: "idle" });
-      shouldReturnToModes = true;
-    }
-    if (flowStep === "network") {
-      setNetworkReport({ state: "idle" });
-    }
-    if (flowStep === "inventory") {
-      setDeviceInventoryReport({ state: "idle" });
-    }
-    if (flowStep === "local") {
-      setLocalReport({ state: "idle" });
-    }
-    if (flowStep === "windows") {
-      setWindowsReport({ state: "idle" });
-    }
-    if (flowStep === "macos") {
-      setMacosReport({ state: "idle" });
-    }
-    if (flowStep === "linux") {
-      setLinuxReport({ state: "idle" });
-    }
-    if (shouldReturnToModes) {
+    setDemoReport({ state: "idle" });
+    setQuestionnaireReport({ state: "idle" });
+    setCombinedReport({ state: "idle" });
+    setNetworkReport({ state: "idle" });
+    setDeviceInventoryReport({ state: "idle" });
+    setLocalReport({ state: "idle" });
+    setWindowsReport({ state: "idle" });
+    setMacosReport({ state: "idle" });
+    setLinuxReport({ state: "idle" });
+    if (flowStep !== "welcome" && flowStep !== "safety" && flowStep !== "mode") {
       setFlowStep("mode");
     }
   }
 
   function startOver() {
     setFlowStep("welcome");
-    setAcknowledged(false);
+    setPendingNavigation(null);
     setQuestionnaire({ state: "idle" });
     setQuestionnaireAnswers({});
     setFullReportAnswers({});
@@ -569,6 +640,104 @@ export default function App() {
     setExportStatus(null);
   }
 
+  function currentReportTarget(): FlowStep | null {
+    if (combinedReport.state !== "idle") {
+      return "combined-results";
+    }
+    if (questionnaireReport.state !== "idle") {
+      return "results";
+    }
+    if (demoReport.state !== "idle") {
+      return "demo";
+    }
+    if (localReport.state !== "idle") {
+      return "local";
+    }
+    if (networkReport.state !== "idle") {
+      return "network";
+    }
+    if (deviceInventoryReport.state !== "idle") {
+      return "inventory";
+    }
+    if (windowsReport.state !== "idle") {
+      return "windows";
+    }
+    if (macosReport.state !== "idle") {
+      return "macos";
+    }
+    if (linuxReport.state !== "idle") {
+      return "linux";
+    }
+    return null;
+  }
+
+  async function openNavigationTarget(target: NavigationTarget) {
+    setExportStatus(null);
+    if (target === "welcome") {
+      setFlowStep("welcome");
+      return;
+    }
+    if (target === "mode" || target === "advanced") {
+      setFlowStep("mode");
+      return;
+    }
+    if (target === "demo") {
+      setFlowStep("demo");
+      return;
+    }
+    if (target === "full-report") {
+      await openFullReportFlow();
+      return;
+    }
+    if (target === "local") {
+      await openLocalAudit();
+      return;
+    }
+    if (target === "questionnaire") {
+      await openQuestionnaire();
+      return;
+    }
+    if (target === "network") {
+      openNetworkAwareness();
+      return;
+    }
+    if (target === "inventory") {
+      await openDeviceInventory();
+      return;
+    }
+    if (target === "guidance") {
+      await openGuidanceCatalog();
+      return;
+    }
+    const reportTarget = currentReportTarget();
+    if (reportTarget) {
+      setFlowStep(reportTarget);
+    }
+  }
+
+  function navigateTo(target: NavigationTarget) {
+    if (target === "welcome") {
+      setPendingNavigation(null);
+      void openNavigationTarget(target);
+      return;
+    }
+    if (!acknowledged) {
+      setPendingNavigation(target);
+      setFlowStep("safety");
+      return;
+    }
+    void openNavigationTarget(target);
+  }
+
+  function continueAfterSafetyAcknowledgement() {
+    if (!acknowledged) {
+      return;
+    }
+    const target = pendingNavigation ?? "mode";
+    setPendingNavigation(null);
+    void openNavigationTarget(target);
+  }
+
   return (
     <main className="app-shell">
       <section className={flowStep === "welcome" ? "intro intro--welcome" : "intro intro--compact"}>
@@ -579,20 +748,25 @@ export default function App() {
             </span>
             <p>Blanzy Labs AI app family</p>
           </div>
-          {flowStep !== "welcome" ? (
-            <button className="secondary-button secondary-button--compact" type="button" onClick={startOver}>
-              Start Over
-            </button>
-          ) : null}
         </div>
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 11 polishes report review, evidence labels,
-          export controls, and calm safety copy without adding new checks or persistence.
+          A defensive home cyber hygiene helper for local review, evidence labels, export controls,
+          and calm safety copy without adding new checks or persistence.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
+
+      <PrimaryNavigation
+        activeTarget={activeNavigationTarget(flowStep)}
+        reportAvailable={currentReportTarget() !== null}
+        onNavigate={navigateTo}
+        onStartOver={startOver}
+        onClearCurrentReport={clearCurrentReport}
+      />
+
+      <StatusPanel />
 
       {flowStep === "welcome" && (
         <section className="welcome-panel" aria-labelledby="welcome-heading">
@@ -600,16 +774,16 @@ export default function App() {
             <p className="section-kicker">Welcome</p>
             <h2 id="welcome-heading">A calm checklist for home security basics</h2>
             <p className="muted">
-              AI HomeGuard explains defensive steps in plain language and keeps this slice limited
+              AI HomeGuard explains defensive steps in plain language and keeps this version limited
               to local read-only checks, runtime context, demo data, questionnaire answers, and
               user-triggered report exports.
             </p>
           </div>
           <div className="welcome-actions">
-            <button className="primary-button" type="button" onClick={() => setFlowStep("safety")}>
+            <button className="primary-button" type="button" onClick={() => navigateTo("mode")}>
               Start Guided Flow
             </button>
-            <button className="secondary-button" type="button" onClick={() => setFlowStep("demo")}>
+            <button className="secondary-button" type="button" onClick={() => navigateTo("demo")}>
               Open Demo Dashboard
             </button>
           </div>
@@ -620,7 +794,7 @@ export default function App() {
         <section className="safety-flow-panel" aria-labelledby="safety-flow-heading">
           <div className="flow-heading">
             <p className="section-kicker">Safety notes</p>
-            <h2 id="safety-flow-heading">What this slice does and does not do</h2>
+            <h2 id="safety-flow-heading">What this version does and does not do</h2>
             <p className="muted">
               The goal is transparency first: you should always know when the app is using sample
               data, questionnaire answers, manual inventory, passive network context, or read-only
@@ -661,14 +835,21 @@ export default function App() {
           </label>
 
           <div className="flow-actions">
-            <button className="secondary-button" type="button" onClick={() => setFlowStep("welcome")}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                setPendingNavigation(null);
+                setFlowStep("welcome");
+              }}
+            >
               Back
             </button>
             <button
               className="primary-button"
               type="button"
               disabled={!acknowledged}
-              onClick={() => setFlowStep("mode")}
+              onClick={continueAfterSafetyAcknowledgement}
             >
               Continue
             </button>
@@ -1101,6 +1282,8 @@ export default function App() {
           runtimeLoading={runtimeContext.state === "loading"}
           runtimeError={runtimeContext.state === "error" ? runtimeContext.message : null}
           dockerNote={dockerRuntimeNote}
+          nativeMacInstruction={nativeMacInstruction}
+          browserPlatformHint={browserPlatformHint}
           report={localReport.state === "ready" ? localReport.report : null}
           loading={localReport.state === "loading"}
           error={localReport.state === "error" ? localReport.message : null}
@@ -1125,6 +1308,8 @@ export default function App() {
           unsupportedTitle="Windows checks are unavailable here"
           unsupportedBody="Windows checks can only run when AI HomeGuard is running on a Windows computer. You are seeing a safe unsupported-platform result."
           dockerNote={dockerRuntimeNote}
+          nativeMacInstruction={nativeMacInstruction}
+          browserPlatformHint={browserPlatformHint}
           report={windowsReport.state === "ready" ? windowsReport.report : null}
           loading={windowsReport.state === "loading"}
           error={windowsReport.state === "error" ? windowsReport.message : null}
@@ -1149,6 +1334,8 @@ export default function App() {
           unsupportedTitle="macOS checks are unavailable here"
           unsupportedBody="macOS checks can only run when AI HomeGuard is running on a Mac. You are seeing a safe unsupported-platform result."
           dockerNote={dockerRuntimeNote}
+          nativeMacInstruction={nativeMacInstruction}
+          browserPlatformHint={browserPlatformHint}
           report={macosReport.state === "ready" ? macosReport.report : null}
           loading={macosReport.state === "loading"}
           error={macosReport.state === "error" ? macosReport.message : null}
@@ -1173,6 +1360,8 @@ export default function App() {
           unsupportedTitle="Linux checks are unavailable here"
           unsupportedBody="Linux checks can only run when AI HomeGuard is running on a Linux computer. You are seeing a safe unsupported-platform result."
           dockerNote={dockerRuntimeNote}
+          nativeMacInstruction={nativeMacInstruction}
+          browserPlatformHint={browserPlatformHint}
           report={linuxReport.state === "ready" ? linuxReport.report : null}
           loading={linuxReport.state === "loading"}
           error={linuxReport.state === "error" ? linuxReport.message : null}
@@ -1184,8 +1373,99 @@ export default function App() {
           onClearReport={clearCurrentReport}
         />
       )}
-
-      <StatusPanel />
     </main>
+  );
+}
+
+function activeNavigationTarget(flowStep: FlowStep): NavigationTarget {
+  if (flowStep === "demo") {
+    return "demo";
+  }
+  if (flowStep === "full-questionnaire" || flowStep === "full-options" || flowStep === "combined-results") {
+    return "full-report";
+  }
+  if (flowStep === "local") {
+    return "local";
+  }
+  if (flowStep === "questionnaire" || flowStep === "results") {
+    return "questionnaire";
+  }
+  if (flowStep === "network") {
+    return "network";
+  }
+  if (flowStep === "inventory") {
+    return "inventory";
+  }
+  if (flowStep === "guidance") {
+    return "guidance";
+  }
+  if (flowStep === "windows" || flowStep === "macos" || flowStep === "linux") {
+    return "advanced";
+  }
+  if (flowStep === "mode") {
+    return "mode";
+  }
+  return "welcome";
+}
+
+function PrimaryNavigation({
+  activeTarget,
+  reportAvailable,
+  onNavigate,
+  onStartOver,
+  onClearCurrentReport,
+}: {
+  activeTarget: NavigationTarget;
+  reportAvailable: boolean;
+  onNavigate: (target: NavigationTarget) => void;
+  onStartOver: () => void;
+  onClearCurrentReport: () => void;
+}) {
+  const items: Array<{ target: NavigationTarget; label: string; disabled?: boolean }> = [
+    { target: "welcome", label: "Home" },
+    { target: "mode", label: "All Modes" },
+    { target: "demo", label: "Demo Mode" },
+    { target: "full-report", label: "Full HomeGuard Report" },
+    { target: "local", label: "Local Device Audit" },
+    { target: "questionnaire", label: "Questionnaire" },
+    { target: "network", label: "Local Network Awareness" },
+    { target: "inventory", label: "Device Inventory Helper" },
+    { target: "review", label: "Report Review / Export", disabled: !reportAvailable },
+    { target: "advanced", label: "Advanced Checks" },
+  ];
+
+  return (
+    <nav className="primary-nav" aria-label="Primary navigation">
+      <div className="primary-nav__items">
+        {items.map((item) => {
+          const isActive = item.target === activeTarget;
+          return (
+            <button
+              className={isActive ? "nav-button nav-button--active" : "nav-button"}
+              type="button"
+              key={item.target}
+              disabled={item.disabled}
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => onNavigate(item.target)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      <div className="primary-nav__actions">
+        <button className="secondary-button secondary-button--compact" type="button" onClick={onStartOver}>
+          Start Over
+        </button>
+        <button
+          className="secondary-button secondary-button--compact"
+          type="button"
+          disabled={!reportAvailable}
+          onClick={onClearCurrentReport}
+        >
+          Clear Current Report
+        </button>
+      </div>
+    </nav>
   );
 }

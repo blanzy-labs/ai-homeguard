@@ -377,7 +377,7 @@ def _top_actions(findings: list[Finding]) -> list[str]:
 
 def _limitations(submission: DeviceInventorySubmission) -> list[str]:
     limitations = [
-        "Device inventory is manual/demo only in Slice 10.",
+        "Device inventory is manual/demo only in this version.",
         "AI HomeGuard does not automatically discover devices.",
         "Router app/admin page device lists remain the source of truth.",
         "Manual inventory can be incomplete or out of date.",

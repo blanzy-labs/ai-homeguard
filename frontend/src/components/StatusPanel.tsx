@@ -43,27 +43,15 @@ export function StatusPanel() {
       </div>
       {backendStatus.state === "loading" && <p className="muted">Checking local backend...</p>}
       {backendStatus.state === "error" && (
-        <p className="status-error">Backend unavailable: {backendStatus.message}</p>
+        <p className="status-error">
+          Backend unavailable. Confirm the backend is running on port 8000. {backendStatus.message}
+        </p>
       )}
       {backendStatus.state === "ready" && (
-        <dl className="status-grid">
-          <div>
-            <dt>Status</dt>
-            <dd>{backendStatus.health.status}</dd>
-          </div>
-          <div>
-            <dt>App</dt>
-            <dd>{backendStatus.version.app}</dd>
-          </div>
-          <div>
-            <dt>Version</dt>
-            <dd>{backendStatus.version.version}</dd>
-          </div>
-          <div>
-            <dt>Family</dt>
-            <dd>{backendStatus.version.family}</dd>
-          </div>
-        </dl>
+        <p className="status-connected">
+          Backend connected: {backendStatus.version.app} {backendStatus.version.version} ·{" "}
+          {backendStatus.health.status} · {backendStatus.version.family}
+        </p>
       )}
     </section>
   );

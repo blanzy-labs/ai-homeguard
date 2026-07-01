@@ -31,8 +31,8 @@ LOCAL_DEVICE_AUDIT_DISCLAIMER = (
 
 CONTAINER_LIMITATION_NOTE = (
     "AI HomeGuard appears to be running inside a container. Local checks may reflect the container "
-    "environment rather than the host computer. For host-level macOS checks, run the backend "
-    "directly on macOS."
+    "environment rather than the host computer. For host-level checks, run the backend natively "
+    "with uv on the computer you want to audit."
 )
 
 
@@ -53,17 +53,74 @@ def run_local_device_audit(
     else:
         report = _unknown_platform_report(context, report_time)
 
+    findings = list(report.findings)
+    if context.runtime_environment == RuntimeEnvironment.DOCKER:
+        findings.insert(0, _container_runtime_finding(context))
+
     safety_notes = _enhanced_safety_notes(report.safety_notes, context)
 
     return enrich_report_guidance(report.model_copy(
         update={
             "report_id": f"local-device-audit-{report_time.strftime('%Y%m%d%H%M%S')}",
-            "summary": summary_from_findings(report.findings),
+            "summary": summary_from_findings(findings),
+            "findings": findings,
             "disclaimer": LOCAL_DEVICE_AUDIT_DISCLAIMER,
             "safety_notes": safety_notes,
             "runtime_context": context,
         }
     ))
+
+
+def _container_runtime_finding(context: RuntimeContext) -> Finding:
+    return Finding(
+        id="local-device-audit-container-runtime",
+        title="Container runtime detected",
+        home_title="Container runtime detected",
+        technical_title="Docker/container runtime limits host-level audit visibility",
+        status=FindingStatus.REVIEW,
+        severity=Severity.INFO,
+        confidence=Confidence.HIGH,
+        platform=context.detected_platform,
+        category=Category.DEVICE_POSTURE,
+        summary=(
+            "The backend is running inside a container, so local checks may describe the container "
+            "environment instead of the host computer."
+        ),
+        why_it_matters=(
+            "Host-level Windows, macOS, or Linux checks need the backend process to run directly on "
+            "the computer being reviewed."
+        ),
+        evidence=[
+            Evidence(
+                source="runtime context",
+                method="detect_runtime_environment",
+                observed_value=(
+                    f"detected platform: {context.detected_platform.value}; "
+                    f"runtime environment: {context.runtime_environment.value}"
+                ),
+                expected_value="native host runtime for host-level local device checks",
+                notes="Docker/container visibility may differ from the host operating system.",
+            )
+        ],
+        d3fend_guidance=[
+            D3FENDGuidance(
+                category=D3FENDGuidanceCategory.EDUCATE,
+                defensive_concept="Runtime visibility",
+                home_action="Run the backend natively with uv for host-level local checks.",
+                rationale="Running outside Docker gives AI HomeGuard visibility into the host runtime.",
+                difficulty=Difficulty.EASY,
+                estimated_time_minutes=5,
+            )
+        ],
+        attack_context=[],
+        recommended_action="For host-level checks, run the backend natively with uv on the computer you want to audit.",
+        difficulty=Difficulty.EASY,
+        estimated_time_minutes=5,
+        user_can_fix=True,
+        requires_admin=False,
+        safe_to_ignore=False,
+        tags=["local-device", "runtime-context", "container-runtime"],
+    )
 
 
 def _unknown_platform_report(context: RuntimeContext, report_time: datetime) -> HomeGuardReport:

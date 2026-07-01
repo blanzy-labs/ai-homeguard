@@ -55,8 +55,8 @@ def get_runtime_context() -> RuntimeContext:
     if environment == RuntimeEnvironment.DOCKER:
         limitations.append(
             "AI HomeGuard appears to be running inside a container. Local checks may reflect the "
-            "container environment rather than the host computer. For host-level macOS checks, run "
-            "the backend directly on macOS."
+            "container environment rather than the host computer. For host-level checks, run the "
+            "backend natively with uv on the computer you want to audit."
         )
     elif environment == RuntimeEnvironment.UNKNOWN:
         limitations.append("AI HomeGuard could not confidently identify the runtime environment.")

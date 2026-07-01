@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from app.models.enums import Category, D3FENDGuidanceCategory, Difficulty, Platform
 from app.models.guidance import D3FENDGuidance
 
-CATALOG_VERSION = "v0.1.0-slice-8"
+CATALOG_VERSION = "v0.1.0-guidance-catalog"
 CATALOG_SOURCE_NOTE = (
     "Local curated D3FEND-informed educational catalog bundled with AI HomeGuard. "
     "No live MITRE or external data fetch is performed at runtime."

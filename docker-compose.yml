@@ -4,7 +4,7 @@ services:
       context: ./backend
     environment:
       APP_NAME: AI HomeGuard
-      APP_VERSION: 0.1.0-dev
+      APP_VERSION: 0.1.0
       APP_ENV: local
       ENABLE_NETWORK_CHECKS: "false"
       ENABLE_AI_SUMMARY: "false"

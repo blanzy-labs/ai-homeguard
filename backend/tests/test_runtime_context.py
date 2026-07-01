@@ -48,3 +48,18 @@ def test_runtime_context_is_privacy_safe(monkeypatch) -> None:
     assert "rob" not in serialized.lower()
     assert "/Users/" not in serialized
     assert "OPENAI_API_KEY" not in serialized
+
+
+def test_runtime_context_container_limitation_is_clear(monkeypatch) -> None:
+    monkeypatch.setattr("platform.system", lambda: "Linux")
+    monkeypatch.setattr("platform.machine", lambda: "aarch64")
+    monkeypatch.setattr("platform.node", lambda: "container-hostname")
+    monkeypatch.setattr("app.core.platform._path_exists", lambda path: path == "/.dockerenv")
+    monkeypatch.setattr("app.core.platform._read_text", lambda path: "")
+
+    context = get_runtime_context()
+
+    assert context.detected_platform == "linux"
+    assert context.runtime_environment == "docker"
+    assert any("container environment rather than the host computer" in item for item in context.limitations)
+    assert any("run the backend natively with uv" in item for item in context.limitations)

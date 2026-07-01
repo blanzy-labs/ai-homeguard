@@ -84,7 +84,7 @@ def _passive_only_finding() -> Finding:
         evidence=[
             Evidence(
                 source="network awareness policy",
-                method="slice-9 safety policy",
+                method="network safety policy",
                 observed_value="passive local context only",
                 expected_value="no active discovery, port scanning, packet capture, router login, or public target scanning",
                 notes="No target input was accepted and no network scan was run.",

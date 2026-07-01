@@ -1,5 +1,7 @@
 # Local Install
 
+Release: AI HomeGuard v0.1.0 - Local Home Security Audit MVP
+
 ## Prerequisites
 
 - macOS, Linux, or Windows with a supported development shell
@@ -73,7 +75,12 @@ Expected URLs:
 - Linux local report: http://localhost:8000/reports/linux-local
 - API docs: http://localhost:8000/docs
 
-Docker note: Docker runs the backend inside a Linux container. `/reports/local-device` reflects the backend runtime, so Docker results may describe the container instead of the host. For true host macOS checks, run the backend directly with uv instead of Docker.
+Docker note: Docker runs the backend inside a Linux container. `/runtime` and `/reports/local-device` reflect the backend runtime, so Docker on a Mac may report a Linux container runtime instead of host macOS. For true host-level macOS checks, run the backend directly with uv instead of Docker:
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
 
 Stop Docker services:
 

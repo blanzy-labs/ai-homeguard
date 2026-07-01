@@ -50,7 +50,7 @@ def test_combined_report_can_include_authorized_network_awareness(monkeypatch) -
             "network_authorization": {
                 "acknowledged": True,
                 "scope": "home_network",
-                "statement_version": "v0.1.0-slice-9",
+                "statement_version": "v0.1.0-network-awareness",
             },
         },
     )

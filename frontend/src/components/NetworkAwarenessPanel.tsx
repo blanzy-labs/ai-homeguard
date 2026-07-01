@@ -63,7 +63,7 @@ export function NetworkAwarenessPanel({
         />
         <span>
           I confirm this is my own home network or a network I am authorized to assess. I understand
-          this slice uses passive local network context only. No active scanning, port scanning,
+          this version uses passive local network context only. No active scanning, port scanning,
           packet capture, router login, or public target scanning will be performed.
         </span>
       </label>
