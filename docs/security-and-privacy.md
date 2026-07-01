@@ -9,7 +9,7 @@ AI HomeGuard v0.1.0 includes:
 - No cloud storage
 - No login or account system
 - No background service
-- No network scanning
+- No public target scanning or port scanning
 - No OpenAI or other AI provider calls
 - Read-only Windows local audit commands only when running on Windows
 - Read-only macOS local audit commands only when running on macOS
@@ -19,6 +19,7 @@ AI HomeGuard v0.1.0 includes:
 - User-triggered Markdown and JSON exports
 - Local static D3FEND-informed guidance catalog and enrichment service
 - Authorization-gated passive local network awareness
+- Authorization-gated Safe Private Network Discovery using passive cache data and bounded private IPv4 ping only
 - Manual/demo device inventory helper
 - Generic vendor-neutral router guidance
 - Frontend report review with shared report, finding, filter, export, loading, error, and empty states
@@ -28,9 +29,9 @@ AI HomeGuard v0.1.0 includes:
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
 - No ClamAV file scans
-- No automatic device discovery
+- No unauthenticated or public device discovery
 - No real router login or router credential collection
-- No active network scanning, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, credential testing, or public target scanning
+- No Nmap, ping sweeps across arbitrary ranges, ARP scanning, port scanning, packet capture, device fingerprinting, router login, credential testing, or public target scanning
 - Static fake demo data only
 - Dashboard-first Run HomeGuard Check flow that reuses existing backend reports and exports
 - Questionnaire answers kept in browser memory and submitted only to the local backend
@@ -40,7 +41,7 @@ AI HomeGuard v0.1.0 includes:
 
 AI HomeGuard does not exploit, brute-force, capture credentials, sniff packets, or attack targets.
 
-Future network checks will require explicit user authorization and must remain limited to systems and networks the user owns or is authorized to assess.
+Network-aware checks require explicit user authorization and must remain limited to systems and networks the user owns or is authorized to assess.
 
 The `/demo/report` endpoint returns a deterministic fake report for UI development and education. It does not inspect the local system, read local security settings, enumerate devices, call an AI provider, store records, or send telemetry.
 
@@ -61,9 +62,11 @@ Markdown and JSON exports are user-triggered. The backend returns export content
 
 The D3FEND-informed guidance catalog is local and static. AI HomeGuard does not fetch live MITRE data, call an AI provider, send telemetry, persist catalog lookups, or change settings while enriching guidance. Guidance is educational and may be incomplete.
 
-Network awareness authorization is request-level only and is not stored. v0.1.0 uses passive local context only and keeps authorization language visible in the frontend before the report can run. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
+Network awareness authorization is request-level only and is not stored. Passive local context uses local route and neighbor-cache visibility only. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
 
-Device inventory is manual/demo only. AI HomeGuard does not discover devices automatically, scan the network, send packets, fingerprint devices, log in to routers, request router credentials, capture packets, or upload inventory data. The UI labels inventory findings as Manual Device Inventory or Demo Device Inventory so it does not imply automatic detection. Hostnames, IP addresses, MAC addresses, personal names, exact room locations, and serial numbers are not required. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked.
+Safe Private Network Discovery authorization is also request-level only and is not stored. It requires acknowledgement, `home_network` scope, private-network-only acknowledgement, and explicit active-discovery consent before bounded ping checks run. Discovery is limited to detected RFC1918 private IPv4 local ranges and a conservative host count. It uses passive cache data and, when enabled, simple platform ping command arrays with short timeouts. It does not accept user-entered public targets, hostnames, domains, or arbitrary target fields in the primary UI. It does not scan ports, run Nmap, fingerprint services, capture packets, log in to routers, request router credentials, test credentials, upload results, persist results, or change settings. MAC hints are masked and hostnames are hidden by default. Unknown devices are review-level findings.
+
+Device inventory is manual/demo only. The inventory helper does not discover devices automatically, scan the network, send packets, fingerprint devices, log in to routers, request router credentials, capture packets, or upload inventory data. The UI labels inventory findings as Manual Device Inventory or Demo Device Inventory so it does not imply automatic detection. Hostnames, IP addresses, MAC addresses, personal names, exact room locations, and serial numbers are not required. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked.
 
 Router guidance is local, generic, and vendor-neutral. It does not provide exploit instructions, default router passwords, router bypass guidance, or router-login automation. Users should use their router app/admin page as the source of truth and should not enter router passwords into AI HomeGuard.
 
@@ -79,7 +82,7 @@ Runtime context is intentionally minimal. It may report detected platform, runti
 
 Windows, macOS, and Linux listening ports are local-only socket summaries. AI HomeGuard does not scan remote hosts or the local network. User-facing output summarizes ports and generic service hints, not usernames, file paths, process command arguments, passwords, tokens, or secrets.
 
-Network awareness may run read-only local route or neighbor-cache visibility commands when authorized. These commands are passive local context only and do not send packets to other devices. In Docker, network context may reflect the container network instead of the home network.
+Network awareness may run read-only local route or neighbor-cache visibility commands when authorized. These commands are passive local context only and do not send packets to other devices. Safe Private Network Discovery may send bounded ping traffic only to validated private IPv4 addresses when explicitly authorized. In Docker, network context and discovery may reflect the container network instead of the home network.
 
 The local Administrators group check reports counts and categories only. Full local administrator usernames are intentionally not included in user-facing findings.
 

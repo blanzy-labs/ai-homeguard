@@ -225,9 +225,42 @@ If `/knowledge/d3fend-guidance/{guidance_id}` returns 404, confirm the ID is one
 
 When the backend runs in Docker, passive network context may describe the container network rather than the host or home network. Run the backend natively for host-level local network context.
 
+## Device Discovery Shows the Container Network
+
+Safe Private Network Discovery runs where the backend process runs. In Docker, it may find devices on the container network instead of your actual home Wi-Fi. This is expected and should appear as a dashboard limitation.
+
+Run the backend natively for a better host/home-network view:
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
 ## Network Awareness Shows No Passive Device Entries
 
-v0.1.0 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list. Active private-network discovery is deferred to a future version and must require explicit authorization, private-network-only guardrails, no credential testing, no exploit logic, no packet capture, and no router login.
+Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list.
+
+## Device Discovery Found No Devices
+
+Safe Private Network Discovery uses passive cache data and, when explicitly authorized, bounded ping-only checks against detected private IPv4 local addresses. It may find no devices if your computer is on guest Wi-Fi, client isolation is enabled, a VPN changes route visibility, local firewall rules block ping replies, or Docker is showing a container network.
+
+Check that you are on your normal home Wi-Fi, turn off VPN temporarily if appropriate, or compare with your router app/admin page.
+
+## Ping Is Blocked by Firewall
+
+Some devices ignore ping, and some endpoint firewalls block ping replies. HomeGuard treats this as limited visibility. It does not fall back to port checks, Nmap, packet capture, router login, or credential testing.
+
+## VPN Changes Network Context
+
+VPNs can change the default route and make the backend see a VPN network instead of the home network. Disconnect the VPN temporarily if you want to review the local home network, then run HomeGuard again.
+
+## Guest Wi-Fi or Client Isolation Hides Devices
+
+Guest Wi-Fi and client isolation can intentionally prevent devices from seeing one another. HomeGuard may find only the gateway or no nearby devices. This is not automatically bad; it may be a privacy or isolation feature.
+
+## Router App Shows More Devices Than HomeGuard
+
+Your router app may show historical leases, offline devices, and device names that are not visible from the computer running HomeGuard. Use the router app as the source of truth for a complete device list. HomeGuard keeps unknown devices at review level because automatic discovery can be incomplete.
 
 ## Device Inventory Helper Has No Devices
 

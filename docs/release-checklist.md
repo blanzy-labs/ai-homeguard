@@ -36,6 +36,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] Docker smoke checks pass
 - [x] Endpoint smoke checks pass
 - [x] Dashboard-first smoke items documented in `docs/validation/slice-13-validation.md`
+- [x] Safe Private Network Discovery validation documented in `docs/validation/slice-14-validation.md`
 - [ ] Manual UI smoke check complete - owner manual smoke found release-blocking issues; Slice 12A fixes require owner retest
 - [x] Release checklist result recorded in validation document
 
@@ -43,9 +44,12 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 
 - [x] No secrets found
 - [x] No `.env` committed
-- [x] No active network scanning code added
+- [x] Safe Private Network Discovery limited to explicit authorization and private IPv4 local ranges
+- [x] Public target rejection validated
+- [x] Hostname/domain target rejection validated
+- [x] Large subnet limit validated
 - [x] No Nmap execution path
-- [x] No ping sweep path
+- [x] No arbitrary ping sweep path
 - [x] No port scanning other devices
 - [x] No packet capture path
 - [x] No router login flow
@@ -65,6 +69,8 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] D3FEND guidance labeled educational/informed
 - [x] Exports warn users to review before sharing
 - [x] Full MAC addresses and hostnames are not exposed by default
+- [x] MAC hints are masked in discovery output
+- [x] Docker/container discovery limitation documented
 
 ## Feature Scope
 
@@ -80,6 +86,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] Markdown and JSON export included
 - [x] D3FEND-informed defensive guidance catalog included
 - [x] Passive local network awareness foundation included
+- [x] Safe Private Network Discovery included
 - [x] Manual/demo device inventory helper included
 - [x] Router guidance included
 - [x] Report review experience included

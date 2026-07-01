@@ -28,7 +28,7 @@ The Slice 13 dashboard prioritizes:
 
 Still out of scope for v0.1.0:
 
-- Active network discovery
+- Public, arbitrary-target, or port-based network discovery
 - Nmap
 - Ping sweeps
 - Port scanning
@@ -39,4 +39,4 @@ Still out of scope for v0.1.0:
 - Telemetry
 - Sensitive or report persistence
 
-Follow-up dashboard work should continue reducing technical choices before value, improve the plain-English action plan, and preserve the local web-based app model. Any future discovery work remains separate from Slice 13 and must be explicitly authorized, private-network-only, user-controlled, transparent, and free of credential testing, exploit logic, packet capture, router login, public target scanning, and telemetry.
+Follow-up dashboard work should continue reducing technical choices before value, improve the plain-English action plan, and preserve the local web-based app model. Slice 14 adds Safe Private Network Discovery under explicit authorization, private IPv4-only guardrails, no port scanning, no router login, no credential testing, no packet capture, no public target scanning, no persistence, and no telemetry. Future discovery work should stay within those guardrails.

@@ -343,6 +343,15 @@ h3 {
   line-height: 1.5;
 }
 
+.guided-discovery-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #b6d0c8;
+  border-radius: 8px;
+  background: #f7fbf8;
+}
+
 .welcome-panel .muted,
 .flow-heading .muted {
   max-width: 780px;
@@ -828,6 +837,10 @@ h3 {
   border-left-color: #596579;
 }
 
+.coverage-card--not-available-on-this-platform {
+  border-left-color: #7a8493;
+}
+
 .coverage-card strong {
   color: #101827;
 }
@@ -835,6 +848,60 @@ h3 {
 .coverage-card p {
   color: #506079;
   line-height: 1.5;
+}
+
+.network-devices-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  border: 1px solid #b6d0c8;
+  border-left: 5px solid #0d6759;
+  border-radius: 8px;
+  background: #f7fbf8;
+}
+
+.network-devices-tile .muted {
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.network-device-summary {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #d6d9d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.network-device-summary strong {
+  color: #101827;
+  font-size: 1.45rem;
+}
+
+.network-device-summary span {
+  color: #506079;
+  font-weight: 800;
+}
+
+.safety-chip-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.safety-chip-list span {
+  min-height: 34px;
+  padding: 8px 10px;
+  border: 1px solid #b6d0c8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0d6759;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .dashboard-action-groups {
@@ -1399,6 +1466,7 @@ h3 {
     .home-cta-panel,
     .home-check-grid,
     .home-trust-grid,
+    .network-devices-tile,
     .coverage-grid,
     .welcome-panel,
   .mode-grid,

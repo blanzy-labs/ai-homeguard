@@ -27,6 +27,15 @@ type GroupedFindings = {
   findings: Finding[];
 };
 
+type NetworkDeviceSummary = {
+  checked: boolean;
+  deviceCount: number;
+  reviewCount: number;
+  gatewayDetected: boolean;
+  dockerLimited: boolean;
+  unableToCheck: boolean;
+};
+
 type HomeGuardDashboardProps = {
   report: HomeGuardReport;
   kicker: string;
@@ -58,6 +67,7 @@ export function HomeGuardDashboard({
   const groups = groupedFindings(report.findings);
   const allLimitations = uniqueValues([...(report.runtime_context?.limitations ?? []), ...limitations]);
   const [doFirst, doNext, later] = actionGroups(report.summary.top_actions);
+  const networkDevices = networkDeviceSummary(report);
 
   return (
     <section className="homeguard-dashboard" aria-labelledby="homeguard-dashboard-heading">
@@ -97,6 +107,34 @@ export function HomeGuardDashboard({
       </section>
 
       <StatusCounts report={report} />
+
+      <section className="network-devices-tile" aria-labelledby="network-devices-heading">
+        <div>
+          <p className="section-kicker">Network Devices</p>
+          <h2 id="network-devices-heading">Devices on your home network</h2>
+          <p className="muted">
+            {networkDevices.checked
+              ? "HomeGuard checked private local network addresses only."
+              : "Device discovery has not been run for this report."}
+          </p>
+        </div>
+        <div className="network-device-summary">
+          <strong>{networkDeviceStatus(networkDevices)}</strong>
+          {networkDevices.checked ? (
+            <span>
+              {networkDevices.reviewCount} need review
+              {networkDevices.gatewayDetected ? " - Router/gateway found" : ""}
+            </span>
+          ) : (
+            <span>Not checked</span>
+          )}
+        </div>
+        <div className="safety-chip-list" aria-label="Network discovery safety boundaries">
+          <span>No public targets were scanned</span>
+          <span>No ports were scanned</span>
+          <span>No router login was attempted</span>
+        </div>
+      </section>
 
       <section className="coverage-panel" aria-labelledby="coverage-heading">
         <div>
@@ -204,6 +242,7 @@ function coverageItems(report: HomeGuardReport, limitations: string[], demoMode:
   const hasDevice = sources.some((source) => source === "Local Device Check" || source === "Runtime Context");
   const hasQuestions = sources.includes("Questionnaire");
   const hasNetwork = sources.includes("Passive Network Awareness");
+  const hasDiscovery = sources.includes("Network Discovery");
   const hasInventory = sources.some((source) => source.includes("Device Inventory"));
   const hasCouldNotCheck = sources.includes("Could Not Check");
   const hasRouterGuidance = report.findings.some((finding) => {
@@ -257,6 +296,13 @@ function coverageItems(report: HomeGuardReport, limitations: string[], demoMode:
         : "Passive network awareness is optional and requires separate authorization.",
     },
     {
+      label: "Network devices",
+      status: hasDiscovery ? "Checked" : "Not checked",
+      note: hasDiscovery
+        ? "Private local device discovery was included with authorization."
+        : "Use Find devices on my home network to include this area.",
+    },
+    {
       label: "Device inventory",
       status: hasInventory ? "Checked" : "Needs your input",
       note: hasInventory ? "Device inventory findings were included." : "Add manual/router list entries to include this area.",
@@ -286,6 +332,9 @@ function findingGroup(finding: Finding) {
   const category = finding.category.toLowerCase();
   const source = evidenceSourceLabel(finding);
 
+  if (source === "Network Discovery" || tags.includes("network-discovery")) {
+    return "Network Devices";
+  }
   if (source === "Passive Network Awareness" || tags.includes("network-awareness")) {
     return "Network Awareness";
   }
@@ -317,4 +366,44 @@ function slugify(value: string) {
 
 function uniqueValues(values: string[]) {
   return values.filter((value, index) => values.indexOf(value) === index);
+}
+
+function networkDeviceSummary(report: HomeGuardReport): NetworkDeviceSummary {
+  const discoveryFindings = report.findings.filter((finding) => finding.tags.includes("network-discovery"));
+  const deviceFindings = report.findings.filter((finding) => finding.tags.includes("network-discovery-device"));
+  const summaryFinding = report.findings.find((finding) => finding.id === "network-discovery-devices-found");
+  const dockerLimited = report.findings.some((finding) => finding.id === "network-discovery-container-limitation");
+  const unableToCheck = discoveryFindings.some((finding) => finding.status === "unable_to_check");
+  const gatewayDetected = report.findings.some(
+    (finding) => finding.id === "network-discovery-gateway-detected" || finding.platform === "router",
+  );
+  const reviewCount = deviceFindings.filter((finding) => finding.status === "review").length;
+
+  return {
+    checked: discoveryFindings.length > 0,
+    deviceCount: deviceFindings.length || countFromDiscoverySummary(summaryFinding),
+    reviewCount,
+    gatewayDetected,
+    dockerLimited,
+    unableToCheck,
+  };
+}
+
+function networkDeviceStatus(summary: NetworkDeviceSummary) {
+  if (!summary.checked) {
+    return "Not checked";
+  }
+  if (summary.dockerLimited) {
+    return "Limited by Docker";
+  }
+  if (summary.unableToCheck && summary.deviceCount === 0) {
+    return "Could not check";
+  }
+  return `${summary.deviceCount} found`;
+}
+
+function countFromDiscoverySummary(finding: Finding | undefined) {
+  const observed = finding?.evidence[0]?.observed_value ?? "";
+  const match = observed.match(/devices found: (\d+)/i);
+  return match ? Number(match[1]) : 0;
 }

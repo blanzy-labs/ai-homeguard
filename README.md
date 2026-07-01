@@ -1,6 +1,6 @@
 # AI HomeGuard
 
-AI HomeGuard is a local-first home cyber hygiene app with read-only local checks, questionnaire-guided review, device inventory guidance, passive network awareness, and D3FEND-informed defensive guidance. It is part of the Blanzy Labs AI app family.
+AI HomeGuard is a local-first home cyber hygiene app with read-only local checks, questionnaire-guided review, authorization-gated private network device discovery, device inventory guidance, passive network awareness, and D3FEND-informed defensive guidance. It is part of the Blanzy Labs AI app family.
 
 Repository: https://github.com/blanzy-labs/ai-homeguard
 
@@ -23,6 +23,7 @@ AI HomeGuard helps home users review common security basics in a calm, local-fir
 - Markdown and JSON export
 - D3FEND-informed defensive guidance catalog
 - Passive local network awareness foundation
+- Safe Private Network Discovery with explicit authorization, private IPv4 guardrails, and bounded ping-only device discovery
 - Manual/demo device inventory helper
 - Generic router guidance
 - Report review experience with top actions, grouped findings, evidence source labels, limitations, safety notes, and export controls
@@ -31,9 +32,10 @@ AI HomeGuard helps home users review common security basics in a calm, local-fir
 
 AI HomeGuard is a defensive local review tool. It does not exploit, attack, brute-force, packet-sniff, inspect public targets, or change settings.
 
+Safe Private Network Discovery is available only after explicit authorization. It is limited to detected RFC1918 private IPv4 local ranges, uses passive cache data plus bounded ping-only checks when enabled, and does not accept public targets or hostname/domain targets.
+
 v0.1.0 does not include:
 
-- Active network discovery
 - Nmap
 - Ping sweeps
 - Port scanning other devices
@@ -61,7 +63,7 @@ AI HomeGuard v0.1.0 is not a penetration test, compliance tool, security certifi
 
 Checks are best-effort and platform-dependent. Windows, macOS, and Linux checks only run on matching operating systems. Docker may reflect the Linux container environment rather than the host computer. If Docker is running on a Mac, the backend may correctly report a Linux container runtime; for true host-level macOS checks, run the backend natively with `uv`. Windows and Linux behavior is covered by mocked validation in this development environment and should be further validated on native systems.
 
-Passive network awareness may be incomplete. Manual device inventory depends on user-provided or router app information. v0.1.0 does not actively discover devices on the network. Safe private network discovery is deferred for a future version with explicit authorization, private-network-only guardrails, user control, timeouts, transparent results, no credential testing, no exploit logic, no packet capture, and no router login. D3FEND-informed guidance is educational and does not represent official D3FEND certification or full D3FEND coverage.
+Passive network awareness may be incomplete. Safe Private Network Discovery can find likely devices only on the detected private local IPv4 network after authorization. It does not scan ports, run Nmap, log in to routers, collect credentials, capture packets, inspect public targets, or persist results. Manual device inventory remains available for router app/device list entries and user review. D3FEND-informed guidance is educational and does not represent official D3FEND certification or full D3FEND coverage.
 
 See [docs/disclaimer.md](docs/disclaimer.md) and [docs/security-and-privacy.md](docs/security-and-privacy.md).
 
@@ -71,7 +73,7 @@ The recommended path is Run HomeGuard Check:
 
 1. Click Run HomeGuard Check from the home page.
 2. Review the safety boundaries.
-3. Keep the guided defaults, or choose optional Router & Wi-Fi awareness and manual/demo device inventory.
+3. Keep the guided defaults, or choose optional Router & Wi-Fi awareness, Find devices on my home network, and manual/demo device inventory.
 4. Answer quick home security questions, or skip them and run the selected local checks.
 5. Review the HomeGuard Dashboard: overall status, top actions, what was checked, what still needs input, what could not be checked, grouped findings, limitations, and D3FEND-informed guidance.
 6. Export Markdown or JSON only when you choose to.
@@ -139,6 +141,8 @@ docker compose down
 - Runtime context: http://localhost:8000/runtime
 - Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
 - Network safety policy: http://localhost:8000/network/safety-policy
+- Network discovery policy: http://localhost:8000/network/discovery-policy
+- Network discovery demo: http://localhost:8000/network/discovery/demo
 - Device inventory demo: http://localhost:8000/inventory/demo
 - Router guidance: http://localhost:8000/router/guidance
 - Windows local report: http://localhost:8000/reports/windows-local
@@ -189,6 +193,9 @@ Network awareness:
 
 - `GET /network/safety-policy`
 - `POST /reports/network-awareness`
+- `GET /network/discovery-policy`
+- `GET /network/discovery/demo`
+- `POST /reports/network-discovery`
 
 Device inventory and router guidance:
 
@@ -230,6 +237,7 @@ curl http://localhost:8000/questionnaire
 curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/knowledge/d3fend-guidance
 curl http://localhost:8000/network/safety-policy
+curl http://localhost:8000/network/discovery-policy
 curl http://localhost:8000/inventory/demo
 curl http://localhost:8000/router/guidance
 docker compose down

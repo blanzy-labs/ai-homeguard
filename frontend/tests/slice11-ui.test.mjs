@@ -41,6 +41,9 @@ test("home page presents a dashboard-first guided path and de-emphasized advance
     "View Last Result in This Session",
     "Advanced Options",
     "What HomeGuard checked",
+    "Network Devices",
+    "Find devices on my home network",
+    "Start Device Discovery",
     "Device checks",
     "Questionnaire answers",
     "Passive network awareness",
@@ -65,11 +68,20 @@ test("home page presents a dashboard-first guided path and de-emphasized advance
   assert.match(app, /variant="advanced"/);
   assert.match(app, /advancedOptionsStorageKey/);
   assert.match(app, /guided-setup/);
+  assert.match(app, /networkDiscoveryStatementVersion/);
+  assert.match(app, /include_network_discovery/);
+  assert.match(app, /user_understands_private_network_only/);
+  assert.match(app, /No public targets/);
+  assert.match(app, /No ports checked/);
+  assert.match(app, /No router login/);
   assert.match(app, /PrimaryNavigation/);
   assert.match(app, /openNavigationTarget/);
   assert.match(css, /\.home-cta-panel/);
   assert.match(css, /\.advanced-options-drawer/);
   assert.match(css, /\.guided-setup-panel/);
+  assert.match(css, /\.guided-discovery-panel/);
+  assert.match(css, /\.network-devices-tile/);
+  assert.match(css, /\.safety-chip-list/);
   assert.match(css, /\.mode-card--advanced/);
   assert.match(css, /\.primary-nav/);
   assert.match(css, /\.nav-button--active/);
@@ -167,7 +179,39 @@ test("finding cards show source badges, guidance labels, and collapsed technical
     "Manual Device Inventory",
     "Demo Device Inventory",
     "Passive Network Awareness",
+    "Network Discovery",
   ].forEach((label) => assert.match(labels, new RegExp(label)));
+});
+
+test("network discovery client and dashboard stay private-only and dashboard-first", () => {
+  const client = read("src/api/client.ts");
+  const dashboard = read("src/components/HomeGuardDashboard.tsx");
+  const app = read("src/App.tsx");
+
+  [
+    "NetworkDiscoveryRequest",
+    "getNetworkDiscoveryPolicy",
+    "getNetworkDiscoveryReport",
+    "/network/discovery-policy",
+    "/reports/network-discovery",
+    "include_network_discovery",
+    "network_discovery_request",
+  ].forEach((label) => assert.match(client, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
+
+  [
+    "Devices on your home network",
+    "No public targets were scanned",
+    "No ports were scanned",
+    "No router login was attempted",
+    "Limited by Docker",
+    "Could not check",
+    "network-discovery-device",
+  ].forEach((label) => assert.match(dashboard, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
+
+  assert.doesNotMatch(app + dashboard, /type="password"/i);
+  assert.doesNotMatch(app + dashboard, /name=.*router.*password/i);
+  assert.doesNotMatch(app + client, /target[_-]?input/i);
+  assert.doesNotMatch(app + client, /public target field/i);
 });
 
 test("required safety and privacy copy remains visible", () => {

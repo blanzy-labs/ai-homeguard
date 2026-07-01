@@ -20,6 +20,7 @@ import {
   type HomeGuardReport,
   type CombinedReportResponse,
   type D3FENDCatalogResponse,
+  type NetworkDiscoveryRequest,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
   type RouterGuidanceResponse,
@@ -114,6 +115,7 @@ const safetyAcknowledgementVersion = "0.1.0";
 const safetyAcknowledgementStorageKey = "ai-homeguard-safety-ack-v0.1.0";
 const advancedOptionsStorageKey = "ai-homeguard-advanced-options-open-v0.1.0";
 const networkAwarenessStatementVersion = "v0.1.0-network-awareness";
+const networkDiscoveryStatementVersion = "v0.1.0-slice-14";
 const demoReportUnavailableMessage =
   "Could not load the demo report. Confirm the backend is running on port 8000.";
 
@@ -231,6 +233,9 @@ export default function App() {
   const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
   const [includeNetworkInCombined, setIncludeNetworkInCombined] = useState(false);
   const [combinedNetworkAcknowledged, setCombinedNetworkAcknowledged] = useState(false);
+  const [includeNetworkDiscoveryInCombined, setIncludeNetworkDiscoveryInCombined] = useState(false);
+  const [networkDiscoveryAcknowledged, setNetworkDiscoveryAcknowledged] = useState(false);
+  const [networkDiscoveryPrivateOnlyAcknowledged, setNetworkDiscoveryPrivateOnlyAcknowledged] = useState(false);
   const [includeDeviceInventoryInCombined, setIncludeDeviceInventoryInCombined] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [guidanceCatalog, setGuidanceCatalog] = useState<GuidanceCatalogState>({ state: "idle" });
@@ -329,6 +334,9 @@ export default function App() {
     setCombinedLocalAcknowledged(true);
     setIncludeNetworkInCombined(false);
     setCombinedNetworkAcknowledged(false);
+    setIncludeNetworkDiscoveryInCombined(false);
+    setNetworkDiscoveryAcknowledged(false);
+    setNetworkDiscoveryPrivateOnlyAcknowledged(false);
     setIncludeDeviceInventoryInCombined(false);
     setCombinedSubmission(null);
     setCombinedReport({ state: "idle" });
@@ -457,6 +465,16 @@ export default function App() {
       });
       return;
     }
+    if (
+      includeNetworkDiscoveryInCombined &&
+      (!networkDiscoveryAcknowledged || !networkDiscoveryPrivateOnlyAcknowledged)
+    ) {
+      setCombinedReport({
+        state: "error",
+        message: "Please acknowledge private home network discovery before finding devices.",
+      });
+      return;
+    }
     if (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0) {
       setCombinedReport({
         state: "error",
@@ -472,6 +490,7 @@ export default function App() {
         include_questionnaire: includeQuestions,
         include_local_device: includeLocalInCombined,
         include_network_awareness: includeNetworkInCombined,
+        include_network_discovery: includeNetworkDiscoveryInCombined,
         include_device_inventory: includeDeviceInventoryInCombined,
         questionnaire_submission: includeQuestions ? questionnaireSubmission : null,
         acknowledged_authorization: includeLocalInCombined ? combinedLocalAcknowledged : false,
@@ -482,6 +501,7 @@ export default function App() {
               statement_version: networkAwarenessStatementVersion,
             }
           : null,
+        network_discovery_request: includeNetworkDiscoveryInCombined ? createNetworkDiscoveryRequest() : null,
         device_inventory_submission: includeDeviceInventoryInCombined ? deviceInventorySubmission : null,
       });
       setCombinedReport({ state: "ready", response });
@@ -678,6 +698,9 @@ export default function App() {
     setCombinedLocalAcknowledged(false);
     setIncludeNetworkInCombined(false);
     setCombinedNetworkAcknowledged(false);
+    setIncludeNetworkDiscoveryInCombined(false);
+    setNetworkDiscoveryAcknowledged(false);
+    setNetworkDiscoveryPrivateOnlyAcknowledged(false);
     setIncludeDeviceInventoryInCombined(false);
     setNetworkAcknowledged(false);
     setDeviceInventorySubmission(createEmptyDeviceInventorySubmission());
@@ -695,6 +718,22 @@ export default function App() {
     setMacosReport({ state: "idle" });
     setLinuxReport({ state: "idle" });
     setExportStatus(null);
+  }
+
+  function createNetworkDiscoveryRequest(): NetworkDiscoveryRequest {
+    return {
+      authorization: {
+        acknowledged: networkDiscoveryAcknowledged,
+        scope: "home_network",
+        statement_version: networkDiscoveryStatementVersion,
+        include_active_discovery: true,
+        user_understands_private_network_only: networkDiscoveryPrivateOnlyAcknowledged,
+      },
+      method: "combined",
+      max_hosts: 64,
+      timeout_ms: 500,
+      include_router_gateway: true,
+    };
   }
 
   function currentReportTarget(): FlowStep | null {
@@ -861,11 +900,16 @@ export default function App() {
               <h2 id="what-it-checks-heading">Plain-English coverage</h2>
             </div>
             <div className="home-check-grid">
-              {["This Device", "Accounts & Passwords", "Backups", "Router & Wi-Fi", "Smart Devices", "Network Awareness"].map(
-                (label) => (
-                  <span key={label}>{label}</span>
-                ),
-              )}
+              {[
+                "This Device",
+                "Network Devices",
+                "Accounts & Passwords",
+                "Backups",
+                "Router & Wi-Fi",
+                "Smart Devices",
+              ].map((label) => (
+                <span key={label}>{label}</span>
+              ))}
             </div>
           </section>
 
@@ -1046,6 +1090,54 @@ export default function App() {
             <label className="acknowledgement">
               <input
                 type="checkbox"
+                checked={includeNetworkDiscoveryInCombined}
+                onChange={(event) => {
+                  setIncludeNetworkDiscoveryInCombined(event.target.checked);
+                  if (!event.target.checked) {
+                    setNetworkDiscoveryAcknowledged(false);
+                    setNetworkDiscoveryPrivateOnlyAcknowledged(false);
+                  }
+                }}
+              />
+              <span>
+                <strong>Find devices on my home network</strong>
+                <br />
+                Optional private local device discovery. HomeGuard checks private local addresses
+                only. No public targets, ports, router login, passwords, or packet capture.
+              </span>
+            </label>
+
+            {includeNetworkDiscoveryInCombined ? (
+              <div className="guided-discovery-panel">
+                <div className="safety-chip-list" aria-label="Device discovery safety boundaries">
+                  <span>No public targets</span>
+                  <span>No ports checked</span>
+                  <span>No router login</span>
+                  <span>No passwords</span>
+                  <span>No packet capture</span>
+                </div>
+                <label className="acknowledgement">
+                  <input
+                    type="checkbox"
+                    checked={networkDiscoveryAcknowledged}
+                    onChange={(event) => setNetworkDiscoveryAcknowledged(event.target.checked)}
+                  />
+                  <span>I confirm this is my own home network or I am authorized to check it.</span>
+                </label>
+                <label className="acknowledgement">
+                  <input
+                    type="checkbox"
+                    checked={networkDiscoveryPrivateOnlyAcknowledged}
+                    onChange={(event) => setNetworkDiscoveryPrivateOnlyAcknowledged(event.target.checked)}
+                  />
+                  <span>I understand HomeGuard will only check private local network addresses.</span>
+                </label>
+              </div>
+            ) : null}
+
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
                 checked={includeDeviceInventoryInCombined}
                 onChange={(event) => setIncludeDeviceInventoryInCombined(event.target.checked)}
               />
@@ -1076,15 +1168,22 @@ export default function App() {
               type="button"
               disabled={
                 (includeNetworkInCombined && !combinedNetworkAcknowledged) ||
+                (includeNetworkDiscoveryInCombined &&
+                  (!networkDiscoveryAcknowledged || !networkDiscoveryPrivateOnlyAcknowledged)) ||
                 (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0) ||
                 (!includeQuestionsInCombined &&
                   !includeLocalInCombined &&
                   !includeNetworkInCombined &&
+                  !includeNetworkDiscoveryInCombined &&
                   !includeDeviceInventoryInCombined)
               }
               onClick={continueGuidedSetup}
             >
-              {includeQuestionsInCombined ? "Answer Quick Questions" : "Run Check"}
+              {includeQuestionsInCombined
+                ? "Answer Quick Questions"
+                : includeNetworkDiscoveryInCombined
+                  ? "Start Device Discovery"
+                  : "Run Check"}
             </button>
           </div>
         </section>
@@ -1421,8 +1520,12 @@ export default function App() {
       {flowStep === "combined-results" && combinedReport.state === "loading" && (
         <LoadingState
           kicker="Full report"
-          title="Building combined report"
-          message="Combining selected findings in memory."
+          title={includeNetworkDiscoveryInCombined ? "Finding devices on your home network..." : "Building combined report"}
+          message={
+            includeNetworkDiscoveryInCombined
+              ? "Checking local private network only. No ports are being scanned."
+              : "Combining selected findings in memory."
+          }
         />
       )}
 

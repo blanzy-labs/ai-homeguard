@@ -1,4 +1,5 @@
 import ipaddress
+from collections.abc import Iterable
 
 from app.models.network import NetworkScopeValidation
 
@@ -8,6 +9,8 @@ PRIVATE_IPV4_RANGES = (
     ipaddress.ip_network("192.168.0.0/16"),
 )
 UNIQUE_LOCAL_IPV6 = ipaddress.ip_network("fc00::/7")
+DEFAULT_DISCOVERY_HOST_LIMIT = 64
+HARD_DISCOVERY_HOST_LIMIT = 256
 
 
 def is_private_ip(value: str) -> bool:
@@ -28,6 +31,60 @@ def is_link_local_ip(value: str) -> bool:
 def is_public_ip(value: str) -> bool:
     address = _parse_ip(value)
     return bool(address and address.is_global)
+
+
+def reject_hostnames(targets_or_ranges: Iterable[str]) -> None:
+    rejected = [value for value in targets_or_ranges if classify_network_target(value) == "hostname_rejected"]
+    if rejected:
+        raise ValueError("Hostnames and domains are not supported as discovery targets in v0.1.0.")
+
+
+def reject_public_targets(targets_or_ranges: Iterable[str]) -> None:
+    rejected = [value for value in targets_or_ranges if classify_network_target(value) == "public"]
+    if rejected:
+        raise ValueError("Public targets are not supported for AI HomeGuard network discovery.")
+
+
+def validate_private_subnet(value: str) -> ipaddress.IPv4Network:
+    classification = classify_network_target(value)
+    if classification == "hostname_rejected":
+        raise ValueError("Hostnames and domains are not supported as discovery targets in v0.1.0.")
+    if classification == "public":
+        raise ValueError("Public targets are not supported for AI HomeGuard network discovery.")
+    if classification in {"loopback", "link_local"}:
+        raise ValueError("Loopback and link-local addresses are not active discovery targets in v0.1.0.")
+
+    try:
+        network = ipaddress.ip_network(value.strip(), strict=False)
+    except ValueError as error:
+        raise ValueError("Discovery target must be a private IPv4 subnet.") from error
+
+    if network.version != 4:
+        raise ValueError("IPv6 active discovery is not supported in v0.1.0.")
+    if not any(network.subnet_of(private_range) for private_range in PRIVATE_IPV4_RANGES):
+        raise ValueError("Discovery is limited to RFC1918 private IPv4 ranges.")
+    return network
+
+
+def limit_subnet_size(
+    network: ipaddress.IPv4Network,
+    *,
+    max_hosts: int = DEFAULT_DISCOVERY_HOST_LIMIT,
+    hard_limit: int = HARD_DISCOVERY_HOST_LIMIT,
+) -> list[ipaddress.IPv4Address]:
+    if max_hosts < 1:
+        raise ValueError("Discovery host limit must be at least 1.")
+    if max_hosts > hard_limit:
+        raise ValueError("Discovery host limit is too large.")
+    usable_host_count = max(0, network.num_addresses - (2 if network.prefixlen <= 30 else 0))
+    if usable_host_count > hard_limit and network.prefixlen < 24:
+        raise ValueError("Detected subnet is too large for v0.1.0 active discovery.")
+    hosts: list[ipaddress.IPv4Address] = []
+    for address in network.hosts():
+        hosts.append(address)
+        if len(hosts) >= max_hosts:
+            break
+    return hosts
 
 
 def classify_network_target(value: str) -> str:

@@ -9,10 +9,10 @@ from app.version import APP_NAME, APP_VERSION
 
 COMBINED_REPORT_DISCLAIMER = (
     "This combined AI HomeGuard report may include questionnaire-derived findings, read-only "
-    "local device audit findings, passive local network awareness findings, and manual/demo "
-    "device inventory findings. AI HomeGuard did not run active network discovery, discover "
-    "devices automatically, scan ports, log in to routers, collect router credentials, change "
-    "settings, upload data, call an AI provider, or save this report automatically."
+    "local device audit findings, passive local network awareness findings, authorized private "
+    "network discovery findings, and manual/demo device inventory findings. AI HomeGuard did not "
+    "scan public targets, scan ports, log in to routers, collect router credentials, "
+    "change settings, upload data, call an AI provider, or save this report automatically."
 )
 
 

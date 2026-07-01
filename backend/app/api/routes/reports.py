@@ -7,6 +7,14 @@ from app.models.device_inventory import DeviceInventorySubmission
 from app.models.questionnaire import QuestionnaireSubmission
 from app.models.report import HomeGuardReport
 from app.models.report_request import CombinedReportRequest, CombinedReportResponse, ExportFormat
+from app.network.discovery import (
+    DISCOVERY_ACTIVE_ERROR,
+    DISCOVERY_AUTHORIZATION_ERROR,
+    DISCOVERY_METHOD_ERROR,
+    DISCOVERY_PRIVATE_ONLY_ERROR,
+    DISCOVERY_SCOPE_ERROR,
+    run_network_discovery_report,
+)
 from app.network.runner import NETWORK_AUTHORIZATION_ERROR, NETWORK_SCOPE_ERROR, run_network_awareness
 from app.questionnaire.report_builder import build_questionnaire_report
 from app.reports.json_export import render_json_export
@@ -55,10 +63,16 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
             status_code=400,
             detail="Device inventory submission is required when include_device_inventory is true.",
         )
+    if request.include_network_discovery and request.network_discovery_request is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Network discovery request is required when include_network_discovery is true.",
+        )
     if (
         not request.include_questionnaire
         and not request.include_local_device
         and not request.include_network_awareness
+        and not request.include_network_discovery
         and not request.include_device_inventory
     ):
         raise HTTPException(status_code=400, detail="Select at least one report source.")
@@ -84,6 +98,23 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
             raise HTTPException(status_code=400, detail=detail) from error
         reports.append(network_report)
         limitations.append("Network awareness is passive only; no active discovery or port scanning was run.")
+    if request.include_network_discovery and request.network_discovery_request is not None:
+        try:
+            discovery_report = run_network_discovery_report(request.network_discovery_request)
+        except ValueError as error:
+            detail = str(error)
+            if detail not in {
+                DISCOVERY_AUTHORIZATION_ERROR,
+                DISCOVERY_SCOPE_ERROR,
+                DISCOVERY_PRIVATE_ONLY_ERROR,
+                DISCOVERY_ACTIVE_ERROR,
+                DISCOVERY_METHOD_ERROR,
+            }:
+                detail = "Network discovery could not be started safely."
+            raise HTTPException(status_code=400, detail=detail) from error
+        reports.append(discovery_report)
+        limitations.append("Network discovery is private IPv4 only and authorization-gated.")
+        limitations.append("No public targets, ports, Nmap, router login, credentials, or packet capture were used.")
     if request.include_device_inventory and request.device_inventory_submission is not None:
         reports.append(build_device_inventory_report(request.device_inventory_submission))
         limitations.append("Device inventory findings are based on manual/demo device information.")
@@ -91,12 +122,11 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
 
     combined = merge_homeguard_reports(reports, mode="combined")
     combined.safety_notes = _combined_safety_notes(combined.safety_notes)
-    limitations.extend(
-        [
-            "No active network discovery or port scanning is included in this version.",
-            "Exports are generated only when requested and are not saved automatically.",
-        ]
-    )
+    if request.include_network_discovery:
+        limitations.append("No public target scanning or port scanning is included in this version.")
+    else:
+        limitations.append("No active network discovery or port scanning is included in this version.")
+    limitations.append("Exports are generated only when requested and are not saved automatically.")
 
     export_markdown = render_markdown_report(combined) if request.export_format == ExportFormat.MARKDOWN else None
     export_json = render_json_export(combined) if request.export_format == ExportFormat.JSON else None
@@ -126,7 +156,11 @@ def _combined_safety_notes(notes: list[str]) -> list[str]:
             *notes,
             "Combined reports are generated in memory and are not saved automatically.",
             "Exports are created only when you click an export button or call an export endpoint.",
+            "Network discovery, when selected, is limited to authorized private IPv4 device discovery.",
             "No network scan was performed.",
+            "No public targets were scanned.",
+            "No ports were scanned.",
+            "No Nmap command was run.",
             "No settings were changed.",
             "No data was uploaded.",
             "No AI provider call was performed.",

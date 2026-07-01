@@ -68,4 +68,5 @@ class ReportMode(str, Enum):
     LOCAL = "local"
     COMBINED = "combined"
     NETWORK_AWARENESS = "network_awareness"
+    NETWORK_DISCOVERY = "network_discovery"
     DEVICE_INVENTORY = "device_inventory"

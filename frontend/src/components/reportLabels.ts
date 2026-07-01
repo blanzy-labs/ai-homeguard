@@ -50,6 +50,9 @@ export function evidenceSourceLabel(finding: Finding) {
   if (sources.some((source) => source.includes("demo"))) {
     return "Demo Data";
   }
+  if (tags.includes("network-discovery") || sources.some((source) => source.includes("network discovery"))) {
+    return "Network Discovery";
+  }
   if (
     tags.includes("network-awareness") ||
     sources.some(

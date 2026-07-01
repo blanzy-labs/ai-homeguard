@@ -12,14 +12,14 @@ AI HomeGuard uses a simple local-first web app structure.
 - Unified local device audit: runtime context, auto-detection, and dispatch to one matching platform runner
 - Combined report and export layer: report merge service, combined report route, Markdown export, and JSON export
 - Knowledge layer: local D3FEND-informed guidance catalog, enrichment service, and knowledge API routes
-- Network awareness foundation: authorization model, private-network guardrails, passive local context service, network report runner, and safety policy route
+- Network awareness and discovery foundation: authorization models, private-network guardrails, passive local context service, safe private device discovery, network report runners, and safety policy routes
 - Device inventory foundation: manual/demo inventory models, deterministic fake inventory, analyzer, report route, combined integration, and generic router guidance
 - Frontend: React, Vite, and TypeScript dashboard-first Run HomeGuard Check flow, de-emphasized Advanced Options, questionnaire, platform audit panels, network awareness, device inventory helper, shared report/dashboard components, results, and demo dashboard UI
 - Frontend tests: dependency-free Node tests covering navigation, report review contracts, source badges, guidance labels, safety copy, and forbidden overclaiming language
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-The v0.1.0 MVP includes frontend UX, copy, accessibility, responsive layout, and report review polish. It does not include active network scanning, automatic device discovery, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, router credential collection, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
+The v0.1.0 MVP includes frontend UX, copy, accessibility, responsive layout, report review polish, and authorization-gated Safe Private Network Discovery. Discovery is limited to detected RFC1918 private IPv4 local ranges, passive cache information, and bounded ping-only checks when explicitly authorized. It does not include Nmap, ping sweeps across arbitrary ranges, ARP scanning, port scanning, packet capture, device fingerprinting, router login, router credential collection, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
 
 ## Finding and Report Model
 
@@ -68,14 +68,14 @@ Future real checks should use the same finding/report model so questionnaire fin
 ## Combined Report Flow
 
 ```text
-frontend -> questionnaire answers + optional local audit authorization
+frontend -> questionnaire answers + optional local audit / network / discovery authorization
 frontend -> POST /reports/combined
-/reports/combined -> questionnaire report builder + optional local_runner + optional network awareness runner + optional device inventory report
+/reports/combined -> questionnaire report builder + optional local_runner + optional network awareness runner + optional private network discovery runner + optional device inventory report
 merge_homeguard_reports -> combined HomeGuardReport
 frontend -> POST /reports/export/markdown or /reports/export/json when user clicks export
 ```
 
-The combined route works in memory only. It does not persist questionnaire answers, local audit results, network awareness results, device inventory submissions, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement. Network awareness findings are included only when the request includes acknowledged `home_network` or `demo` authorization. Device inventory findings are included only when the request includes manual/demo device inventory data.
+The combined route works in memory only. It does not persist questionnaire answers, local audit results, network awareness results, network discovery results, device inventory submissions, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement. Network awareness findings are included only when the request includes acknowledged `home_network` or `demo` authorization. Network discovery findings are included only when the request includes `include_network_discovery` and a `NetworkDiscoveryRequest` with acknowledgement, `home_network` scope, private-network-only acknowledgement, and explicit active-discovery consent if bounded ping discovery is enabled. Device inventory findings are included only when the request includes manual/demo device inventory data.
 
 The merge service in `backend/app/reports/merge.py` preserves findings, enriches D3FEND-informed guidance, preserves educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
 
@@ -93,6 +93,7 @@ Later slices may add AI-assisted summaries generated from the same report model 
 v0.1.0 consolidates report rendering around reusable frontend components and a dashboard-first combined-report surface:
 
 - `HomeGuardDashboard`: primary report surface for the guided Run HomeGuard Check flow and Demo Mode, with overall status, top three actions, coverage, simple next steps, grouped findings, More Detail, and export
+- `Network Devices` dashboard tile: summarizes authorized private network discovery with device count, review count, gateway visibility, Docker limitation, and simple safety boundaries
 - `ReportReviewPanel`: shared report shell for demo, questionnaire, combined, local device, network awareness, and device inventory reports
 - `ReportSummaryCard`: calm overall posture label, score, disclaimer, and report context
 - `StatusCounts`: Good, Review, Fix Soon, Needs Attention, and Unable to Check counts
@@ -137,6 +138,7 @@ Current labels include:
 - `manual_inventory`: Manual Device Inventory
 - `demo_inventory`: Demo Device Inventory
 - `network_awareness`: Passive Network Awareness
+- `network_discovery`: Network Discovery
 
 The backend evidence sources remain deterministic and privacy-safe. The frontend derives labels from existing evidence and tags without adding backend check behavior.
 
@@ -196,11 +198,36 @@ Slice 9 introduces:
 - `GET /network/safety-policy`: authorization/disallowed-action policy
 - `POST /reports/network-awareness`: passive local network awareness report
 
-The guardrails classify RFC1918 IPv4 ranges, loopback, link-local, public IPs, IPv6 loopback, and IPv6 unique local addresses. Hostnames and domains are rejected as future scan targets in v0.1.0. Public targets are rejected.
+The guardrails classify RFC1918 IPv4 ranges, loopback, link-local, public IPs, IPv6 loopback, and IPv6 unique local addresses. Hostnames and domains are rejected as discovery targets in v0.1.0. Public targets are rejected.
 
 The passive context service may read local route and neighbor-cache information through allowlisted read-only commands such as `route -n get default`, `netstat -rn`, `arp -a`, `ip route`, `ip neigh show`, `ipconfig`, and `route print`. These commands are used only for local passive context; they do not send discovery packets, scan ports, run Nmap, capture packets, log in to routers, or test credentials. User-facing output summarizes counts and private-context presence, not full MAC addresses or hostnames.
 
-In Docker, network context may describe the container network rather than the host or home network. Safe private network discovery is a deferred follow-up for a future version with explicit authorization, private IPv4 ranges only, no public targets, user-controlled safe discovery, no credential testing, no exploit logic, no packet capture, no router login, clear cancel/timeout behavior, and transparent results. It is not part of v0.1.0.
+In Docker, network context may describe the container network rather than the host or home network.
+
+## Safe Private Network Discovery
+
+```text
+dashboard -> discovery authorization
+frontend -> POST /reports/network-discovery or /reports/combined
+discovery route -> authorization checks -> private IPv4 guardrails
+discovery runner -> passive cache + optional bounded private ping
+discovery findings -> HomeGuardReport -> dashboard/export
+```
+
+Slice 14 introduces:
+
+- `backend/app/models/network_discovery.py`: discovery authorization, method, runtime mode, discovered device, request, and result models
+- `backend/app/network/guardrails.py`: private IPv4 subnet validation, hostname/public-target rejection, and conservative host limits
+- `backend/app/network/discovery.py`: passive cache parsing, optional bounded ping-only private discovery, masked device hints, discovery findings, demo result, and report builder
+- `backend/app/network/device_classifier.py`: deterministic conservative device classifier
+- `GET /network/discovery-policy`: plain safety policy
+- `GET /network/discovery/demo`: fake masked discovery result for screenshots/tests
+- `POST /reports/network-discovery`: authorization-gated discovery report
+- `POST /reports/combined`: optional `include_network_discovery` integration
+
+Discovery requires `acknowledged: true`, `scope: home_network`, private-network-only acknowledgement, and explicit active-discovery consent before bounded ping checks run. The backend does not accept public targets, hostnames, domains, or arbitrary target fields in the primary UI. If active discovery runs, it only builds private IPv4 addresses from a detected local subnet, applies a conservative host cap, uses platform ping command arrays with timeouts, and skips unsupported/large/unknown ranges with limitations instead of escalating privileges.
+
+Safe Private Network Discovery does not scan ports, run Nmap, fingerprint services, capture packets, log in to routers, test credentials, inspect public targets, persist results, upload data, call an AI provider, or change settings. MAC hints are masked and hostnames are hidden by default. Unknown devices are review-level findings, not panic findings.
 
 ## Device Inventory and Router Guidance Foundation
 
@@ -227,7 +254,7 @@ The inventory model does not require hostname, IP address, MAC address, owner na
 
 Router guidance is generic and vendor-neutral. It helps users review connected devices, unknown devices, guest Wi-Fi, router firmware, Wi-Fi security, remote administration, and router admin hygiene without providing exploit instructions, default router passwords, router bypass guidance, credential collection, or router login automation.
 
-Future active discovery may be considered only in Slice 13 or later with explicit authorization, strict private-network guardrails, and a separate safety review. It is not part of v0.1.0.
+Manual inventory remains useful when router apps show more complete labels than passive cache or bounded ping discovery.
 
 ## Platform Check Architecture
 

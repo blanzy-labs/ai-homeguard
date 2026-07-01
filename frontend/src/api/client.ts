@@ -93,7 +93,7 @@ export type HomeGuardReport = {
   app: string;
   version: string;
   generated_at: string;
-  mode: "demo" | "local" | "combined" | "network_awareness" | "device_inventory";
+  mode: "demo" | "local" | "combined" | "network_awareness" | "network_discovery" | "device_inventory";
   platform_scope: string[];
   summary: ReportSummary;
   findings: Finding[];
@@ -157,10 +157,12 @@ export type CombinedReportRequest = {
   include_local_device?: boolean;
   include_questionnaire?: boolean;
   include_network_awareness?: boolean;
+  include_network_discovery?: boolean;
   include_device_inventory?: boolean;
   questionnaire_submission?: QuestionnaireSubmission | null;
   acknowledged_authorization?: boolean;
   network_authorization?: NetworkAuthorization | null;
+  network_discovery_request?: NetworkDiscoveryRequest | null;
   device_inventory_submission?: DeviceInventorySubmission | null;
   export_format?: "none" | "markdown" | "json";
 };
@@ -211,6 +213,37 @@ export type NetworkSafetyPolicy = {
   private_network_only: string;
   no_public_scanning: string;
   no_active_scanning: string;
+  statement_version: string;
+};
+
+export type DiscoveryAuthorization = {
+  acknowledged: boolean;
+  scope: "none" | "home_network" | "device_only" | "demo";
+  statement_version: string;
+  include_active_discovery?: boolean;
+  user_understands_private_network_only?: boolean;
+};
+
+export type NetworkDiscoveryRequest = {
+  authorization: DiscoveryAuthorization;
+  method?: "passive_cache" | "private_ping" | "combined";
+  max_hosts?: number;
+  timeout_ms?: number;
+  include_router_gateway?: boolean;
+};
+
+export type NetworkDiscoveryPolicy = {
+  authorization_required: boolean;
+  authorization_statement: string;
+  allowed_scopes: string[];
+  allowed_methods: string[];
+  private_network_only: string;
+  no_public_scanning: string;
+  no_port_scanning: string;
+  no_router_login: string;
+  no_credentials: string;
+  no_packet_capture: string;
+  no_nmap: string;
   statement_version: string;
 };
 
@@ -335,6 +368,10 @@ export async function getNetworkSafetyPolicy(): Promise<NetworkSafetyPolicy> {
   return getJson<NetworkSafetyPolicy>("/network/safety-policy");
 }
 
+export async function getNetworkDiscoveryPolicy(): Promise<NetworkDiscoveryPolicy> {
+  return getJson<NetworkDiscoveryPolicy>("/network/discovery-policy");
+}
+
 export async function getDemoDeviceInventory(): Promise<DeviceInventoryDemoResponse> {
   return getJson<DeviceInventoryDemoResponse>("/inventory/demo");
 }
@@ -398,6 +435,27 @@ export async function getNetworkAwarenessReport(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(authorization),
+  });
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      message = payload.detail ?? message;
+    } catch {
+      message = await response.text();
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<HomeGuardReport>;
+}
+
+export async function getNetworkDiscoveryReport(
+  request: NetworkDiscoveryRequest,
+): Promise<HomeGuardReport> {
+  const response = await fetch(`${apiBaseUrl}/reports/network-discovery`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
   });
   if (!response.ok) {
     let message = `Request failed: ${response.status}`;
