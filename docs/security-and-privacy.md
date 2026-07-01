@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 1 includes:
+Slice 2 includes:
 
 - No telemetry
 - No database
@@ -11,10 +11,15 @@ Slice 1 includes:
 - No background service
 - No network scanning
 - No OpenAI or other AI provider calls
+- No local audit commands
+- No real Windows, macOS, Linux, router, or network checks
+- Static fake demo data only
 
 AI HomeGuard does not exploit, brute-force, capture credentials, sniff packets, or attack targets.
 
 Future network checks will require explicit user authorization and must remain limited to systems and networks the user owns or is authorized to assess.
+
+The `/demo/report` endpoint returns a deterministic fake report for UI development and education. It does not inspect the local system, read local security settings, enumerate devices, call an AI provider, store records, or send telemetry.
 
 Local configuration should use `.env` files for private values. The repository ignores `.env` and `.env.*` while keeping `.env.example` as a safe placeholder file. Do not commit real secrets, API keys, credentials, private keys, or sensitive reports.
 

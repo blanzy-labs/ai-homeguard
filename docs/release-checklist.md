@@ -9,8 +9,13 @@
 - Backend tests pass
 - Frontend build passes
 - Docker build and smoke test pass
+- Finding/report model serialization tests pass
+- Demo report route validation passes
+- Demo dashboard build passes
+- Demo data clearly marked fake/static
 - No network scan logic included yet
 - No Nmap integration included yet
+- No local audit commands included yet
 - No platform security check logic included yet
 - No AI provider code included yet
 - No unsupported feature claims
