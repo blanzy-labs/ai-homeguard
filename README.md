@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 10 - Safe Device Inventory Demo and Router Guidance.
+Current slice: Slice 11 - HomeGuard UX Polish and Report Review Experience.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, a manual/demo device inventory helper with generic router guidance, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, a manual/demo device inventory helper with generic router guidance, Docker Compose wiring, Slice 11 report review UX polish, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,7 +16,9 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 10 does not include:
+Slice 11 is UX/report-review polish only. It does not add new security checks or active discovery.
+
+Slice 11 does not include:
 
 - Active network scanning
 - Nmap integration
@@ -31,10 +33,9 @@ Slice 10 does not include:
 - OpenAI or other AI provider calls
 - Live MITRE/D3FEND data fetching at runtime
 - Telemetry, login, cloud storage, or database persistence
-- Remediation or settings changes
+- Remediation, automatic repair, or settings changes
 - sudo or administrator escalation
 - ClamAV file scans
-- Packet capture
 - Automatic report saving
 
 Windows, macOS, and Linux checks are read-only and only execute when AI HomeGuard is running on the matching operating system. Unsupported platform routes return an informational report without running commands for the wrong platform.
@@ -50,6 +51,27 @@ Device Inventory Helper is manual/demo only. It helps users compare devices from
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance comes from a small local curated educational catalog and explicit finding guidance. It is not official D3FEND coverage, certification, or a guarantee of security. Optional ATT&CK context is educational only.
 
 See [docs/disclaimer.md](docs/disclaimer.md) and [docs/security-and-privacy.md](docs/security-and-privacy.md).
+
+## Recommended App Flow
+
+The home screen makes Full HomeGuard Report the recommended path. It starts with the Home Security Questionnaire and can optionally include read-only local device checks, passive local network awareness, and manual/demo device inventory findings.
+
+Secondary paths remain available when you want one source at a time:
+
+- Demo Mode
+- Local Device Audit
+- Home Security Questionnaire
+- Local Network Awareness
+- Device Inventory Helper
+- Defensive Guidance Catalog
+
+Advanced/manual platform routes remain available but are visually de-emphasized:
+
+- Windows Device Audit
+- macOS Device Audit
+- Linux Device Audit
+
+Reports use a shared review experience with overall posture, status counts, top actions, source-labeled findings, filters, collapsed technical details, D3FEND-informed defensive guidance, safety notes, limitations, and user-triggered Markdown/JSON exports. Review exports before sharing.
 
 ## Demo and Questionnaire API
 
@@ -339,6 +361,13 @@ cd frontend
 pnpm build
 ```
 
+Frontend tests:
+
+```bash
+cd frontend
+pnpm test
+```
+
 Docker smoke test:
 
 ```bash
@@ -379,6 +408,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Slice 8 Validation](docs/validation/slice-8-validation.md)
 - [Slice 9 Validation](docs/validation/slice-9-validation.md)
 - [Slice 10 Validation](docs/validation/slice-10-validation.md)
+- [Slice 11 Validation](docs/validation/slice-11-validation.md)
 
 ## License
 

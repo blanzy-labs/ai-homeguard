@@ -34,6 +34,7 @@ import { ModeCard } from "./components/ModeCard";
 import { NetworkAwarenessPanel } from "./components/NetworkAwarenessPanel";
 import { QuestionnaireResults } from "./components/QuestionnaireResults";
 import { QuestionnaireScreen } from "./components/QuestionnaireScreen";
+import { ErrorState, LoadingState } from "./components/ReportReviewPanel";
 import { StatusPanel } from "./components/StatusPanel";
 
 type FlowStep =
@@ -141,6 +142,7 @@ export default function App() {
         return;
       }
       setDemoReport({ state: "loading" });
+      setExportStatus(null);
       try {
         const report = await getDemoReport();
         if (isMounted) {
@@ -165,6 +167,7 @@ export default function App() {
 
   async function openQuestionnaire() {
     setFlowStep("questionnaire");
+    setExportStatus(null);
     if (questionnaire.state === "ready" || questionnaire.state === "loading") {
       return;
     }
@@ -181,6 +184,7 @@ export default function App() {
   }
 
   async function ensureQuestionnaireLoaded() {
+    setExportStatus(null);
     if (questionnaire.state === "ready" || questionnaire.state === "loading") {
       return;
     }
@@ -203,6 +207,7 @@ export default function App() {
 
   async function openLocalAudit() {
     setFlowStep("local");
+    setExportStatus(null);
     if (runtimeContext.state === "ready" || runtimeContext.state === "loading") {
       return;
     }
@@ -220,6 +225,7 @@ export default function App() {
 
   async function openGuidanceCatalog() {
     setFlowStep("guidance");
+    setExportStatus(null);
     if (guidanceCatalog.state === "ready" || guidanceCatalog.state === "loading") {
       return;
     }
@@ -236,11 +242,13 @@ export default function App() {
   }
 
   function openNetworkAwareness() {
+    setExportStatus(null);
     setFlowStep("network");
   }
 
   async function openDeviceInventory() {
     setFlowStep("inventory");
+    setExportStatus(null);
     if (routerGuidance.state === "ready" || routerGuidance.state === "loading") {
       return;
     }
@@ -259,6 +267,7 @@ export default function App() {
   async function submitQuestionnaire(submission: QuestionnaireSubmission) {
     setIsSubmittingQuestionnaire(true);
     setQuestionnaireReport({ state: "loading" });
+    setExportStatus(null);
     setFlowStep("results");
     try {
       const report = await getQuestionnaireReport(submission);
@@ -275,6 +284,7 @@ export default function App() {
 
   function submitFullReportQuestionnaire(submission: QuestionnaireSubmission) {
     setCombinedSubmission(submission);
+    setExportStatus(null);
     setFlowStep("full-options");
   }
 
@@ -336,6 +346,7 @@ export default function App() {
 
   async function runWindowsLocalCheck() {
     setWindowsReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getWindowsLocalReport();
       setWindowsReport({ state: "ready", report });
@@ -349,6 +360,7 @@ export default function App() {
 
   async function runLocalDeviceAudit() {
     setLocalReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getLocalDeviceReport();
       setLocalReport({ state: "ready", report });
@@ -372,6 +384,7 @@ export default function App() {
       return;
     }
     setNetworkReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getNetworkAwarenessReport({
         acknowledged: true,
@@ -389,6 +402,7 @@ export default function App() {
 
   async function loadDemoDeviceInventory() {
     setDeviceInventoryReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const demo = await getDemoDeviceInventory();
       setDeviceInventorySubmission(demo.submission);
@@ -410,6 +424,7 @@ export default function App() {
       return;
     }
     setDeviceInventoryReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getDeviceInventoryReport({
         ...deviceInventorySubmission,
@@ -426,6 +441,7 @@ export default function App() {
 
   async function runMacOSLocalCheck() {
     setMacosReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getMacOSLocalReport();
       setMacosReport({ state: "ready", report });
@@ -439,6 +455,7 @@ export default function App() {
 
   async function runLinuxLocalCheck() {
     setLinuxReport({ state: "loading" });
+    setExportStatus(null);
     try {
       const report = await getLinuxLocalReport();
       setLinuxReport({ state: "ready", report });
@@ -451,6 +468,7 @@ export default function App() {
   }
 
   async function exportMarkdown(report: HomeGuardReport) {
+    setExportStatus("Creating Markdown export in your browser.");
     try {
       const markdown = await exportMarkdownReport(report);
       downloadText("ai-homeguard-report.md", markdown, "text/markdown");
@@ -461,6 +479,7 @@ export default function App() {
   }
 
   async function exportJson(report: HomeGuardReport) {
+    setExportStatus("Creating JSON export in your browser.");
     try {
       const json = await exportJsonReport(report);
       downloadText("ai-homeguard-report.json", JSON.stringify(json, null, 2), "application/json");
@@ -482,20 +501,95 @@ export default function App() {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
+  function clearCurrentReport() {
+    setExportStatus(null);
+    let shouldReturnToModes = false;
+    if (flowStep === "demo") {
+      setDemoReport({ state: "idle" });
+      shouldReturnToModes = true;
+    }
+    if (flowStep === "results") {
+      setQuestionnaireReport({ state: "idle" });
+      shouldReturnToModes = true;
+    }
+    if (flowStep === "combined-results") {
+      setCombinedReport({ state: "idle" });
+      shouldReturnToModes = true;
+    }
+    if (flowStep === "network") {
+      setNetworkReport({ state: "idle" });
+    }
+    if (flowStep === "inventory") {
+      setDeviceInventoryReport({ state: "idle" });
+    }
+    if (flowStep === "local") {
+      setLocalReport({ state: "idle" });
+    }
+    if (flowStep === "windows") {
+      setWindowsReport({ state: "idle" });
+    }
+    if (flowStep === "macos") {
+      setMacosReport({ state: "idle" });
+    }
+    if (flowStep === "linux") {
+      setLinuxReport({ state: "idle" });
+    }
+    if (shouldReturnToModes) {
+      setFlowStep("mode");
+    }
+  }
+
+  function startOver() {
+    setFlowStep("welcome");
+    setAcknowledged(false);
+    setQuestionnaire({ state: "idle" });
+    setQuestionnaireAnswers({});
+    setFullReportAnswers({});
+    setCombinedSubmission(null);
+    setIncludeLocalInCombined(false);
+    setCombinedLocalAcknowledged(false);
+    setIncludeNetworkInCombined(false);
+    setCombinedNetworkAcknowledged(false);
+    setIncludeDeviceInventoryInCombined(false);
+    setNetworkAcknowledged(false);
+    setDeviceInventorySubmission(createEmptyDeviceInventorySubmission());
+    setGuidanceCatalog({ state: "idle" });
+    setRouterGuidance({ state: "idle" });
+    setRuntimeContext({ state: "idle" });
+    setIsSubmittingQuestionnaire(false);
+    setDemoReport({ state: "idle" });
+    setQuestionnaireReport({ state: "idle" });
+    setCombinedReport({ state: "idle" });
+    setNetworkReport({ state: "idle" });
+    setDeviceInventoryReport({ state: "idle" });
+    setLocalReport({ state: "idle" });
+    setWindowsReport({ state: "idle" });
+    setMacosReport({ state: "idle" });
+    setLinuxReport({ state: "idle" });
+    setExportStatus(null);
+  }
+
   return (
     <main className="app-shell">
       <section className={flowStep === "welcome" ? "intro intro--welcome" : "intro intro--compact"}>
         <div className="brand-row">
-          <span className="brand-mark" aria-hidden="true">
-            HG
-          </span>
-          <p>Blanzy Labs AI app family</p>
+          <div className="brand-identity">
+            <span className="brand-mark" aria-hidden="true">
+              HG
+            </span>
+            <p>Blanzy Labs AI app family</p>
+          </div>
+          {flowStep !== "welcome" ? (
+            <button className="secondary-button secondary-button--compact" type="button" onClick={startOver}>
+              Start Over
+            </button>
+          ) : null}
         </div>
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 10 adds manual/demo device inventory and
-          router guidance without active discovery, scanning, or router login.
+          A defensive home cyber hygiene helper. Slice 11 polishes report review, evidence labels,
+          export controls, and calm safety copy without adding new checks or persistence.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -529,14 +623,16 @@ export default function App() {
             <h2 id="safety-flow-heading">What this slice does and does not do</h2>
             <p className="muted">
               The goal is transparency first: you should always know when the app is using sample
-              data, questionnaire answers, or future local checks.
+              data, questionnaire answers, manual inventory, passive network context, or read-only
+              local checks.
             </p>
           </div>
 
           <ul className="safety-boundary-list">
             <li>Runs locally in your development environment.</li>
             <li>Auto-detects Windows, macOS, Linux, or unsupported runtimes.</li>
-            <li>Uses read-only device checks for the detected runtime.</li>
+            <li>Read-only local checks.</li>
+            <li>No settings are changed.</li>
             <li>Returns an unsupported-platform report when a check cannot run here.</li>
             <li>If running in Docker, results may reflect the container rather than the host.</li>
             <li>Does not request sudo, administrator escalation, or passwords.</li>
@@ -550,7 +646,6 @@ export default function App() {
             <li>Does not save reports automatically.</li>
             <li>Exports are created only when you click an export button.</li>
             <li>Questionnaire answers stay in this browser session and are not uploaded.</li>
-            <li>Future network checks will require explicit authorization.</li>
           </ul>
 
           <label className="acknowledgement">
@@ -587,92 +682,120 @@ export default function App() {
             <p className="section-kicker">Choose mode</p>
             <h2 id="mode-heading">Pick what you want to explore</h2>
             <p className="muted">
-              Device audits are read-only and platform-specific. Unsupported checks return a calm
-              local report without running commands for the wrong operating system.
+              Full HomeGuard Report is the recommended path. Read-only local checks. No settings are
+              changed. No network scan is run. No data is uploaded.
             </p>
           </div>
-          <div className="mode-grid">
-            <ModeCard
-              title="Full HomeGuard Report"
-              status="Available"
-              description="Answer the home security questionnaire and optionally include read-only local device checks."
-              onSelect={openFullReportFlow}
-            />
-            <ModeCard
-              title="Local Device Audit"
-              status="Available"
-              description="AI HomeGuard will choose the right local checks for this runtime."
-              onSelect={openLocalAudit}
-            />
-            <ModeCard
-              title="Local Network Awareness"
-              status="Available"
-              description="Review passive local network context and safety guidance. No active discovery or port scanning is run."
-              onSelect={openNetworkAwareness}
-            />
-            <ModeCard
-              title="Device Inventory Helper"
-              status="Available"
-              description="Manually review devices from your router app/device list. AI HomeGuard does not scan or log into your router."
-              onSelect={openDeviceInventory}
-            />
-            <ModeCard
-              title="Windows Device Audit"
-              status="Advanced/manual"
-              description="Manually run Windows posture checks for debugging or platform validation."
-              onSelect={() => setFlowStep("windows")}
-            />
-            <ModeCard
-              title="macOS Device Audit"
-              status="Advanced/manual"
-              description="Manually run macOS posture checks when the backend is running on a Mac."
-              onSelect={() => setFlowStep("macos")}
-            />
-            <ModeCard
-              title="Linux Device Audit"
-              status="Advanced/manual"
-              description="Manually run Linux posture checks, including container visibility in Docker."
-              onSelect={() => setFlowStep("linux")}
-            />
-            <ModeCard
-              title="Home Security Questionnaire"
-              status="Available"
-              description="Answer friendly checklist questions and see questionnaire-only findings."
-              onSelect={openQuestionnaire}
-            />
-            <ModeCard
-              title="Defensive Guidance Catalog"
-              status="Available"
-              description="Review the local D3FEND-informed educational guidance used in reports."
-              onSelect={openGuidanceCatalog}
-            />
-            <ModeCard
-              title="Demo Mode"
-              status="Available"
-              description="Review static sample findings from Slice 2."
-              onSelect={() => setFlowStep("demo")}
-            />
+          <div className="mode-sections">
+            <section className="mode-group mode-group--recommended" aria-labelledby="recommended-mode-heading">
+              <div className="mode-group__header">
+                <p className="section-kicker">Recommended path</p>
+                <h3 id="recommended-mode-heading">Start with the full report</h3>
+              </div>
+              <div className="mode-grid mode-grid--single">
+                <ModeCard
+                  title="Full HomeGuard Report"
+                  status="Recommended"
+                  variant="recommended"
+                  description="Answer the home security questionnaire, then optionally include read-only local checks, passive network awareness, and manual/demo inventory findings."
+                  onSelect={openFullReportFlow}
+                />
+              </div>
+            </section>
+
+            <section className="mode-group" aria-labelledby="secondary-mode-heading">
+              <div className="mode-group__header">
+                <p className="section-kicker">Secondary paths</p>
+                <h3 id="secondary-mode-heading">Explore one source at a time</h3>
+              </div>
+              <div className="mode-grid">
+                <ModeCard
+                  title="Demo Mode"
+                  status="Available"
+                  description="Review static sample findings without entering information."
+                  onSelect={() => setFlowStep("demo")}
+                />
+                <ModeCard
+                  title="Local Device Audit"
+                  status="Available"
+                  description="AI HomeGuard chooses the right read-only local checks for this runtime."
+                  onSelect={openLocalAudit}
+                />
+                <ModeCard
+                  title="Home Security Questionnaire"
+                  status="Available"
+                  description="Answer friendly checklist questions and see questionnaire-only findings."
+                  onSelect={openQuestionnaire}
+                />
+                <ModeCard
+                  title="Device Inventory Helper"
+                  status="Available"
+                  description="Manually review router app/device list entries. No router login is performed. Do not enter router passwords."
+                  onSelect={openDeviceInventory}
+                />
+                <ModeCard
+                  title="Local Network Awareness"
+                  status="Available"
+                  description="Review passive local network context. No active discovery, port scanning, or packet capture is run."
+                  onSelect={openNetworkAwareness}
+                />
+                <ModeCard
+                  title="Defensive Guidance Catalog"
+                  status="Available"
+                  description="Review the local D3FEND-informed educational guidance used in reports."
+                  onSelect={openGuidanceCatalog}
+                />
+              </div>
+            </section>
+
+            <section className="mode-group mode-group--advanced" aria-labelledby="advanced-mode-heading">
+              <div className="mode-group__header">
+                <p className="section-kicker">Advanced/manual paths</p>
+                <h3 id="advanced-mode-heading">Platform-specific validation</h3>
+              </div>
+              <div className="mode-grid mode-grid--compact">
+                <ModeCard
+                  title="Windows Device Audit"
+                  status="Advanced/manual"
+                  variant="advanced"
+                  description="Manually run Windows posture checks for debugging or platform validation."
+                  onSelect={() => setFlowStep("windows")}
+                />
+                <ModeCard
+                  title="macOS Device Audit"
+                  status="Advanced/manual"
+                  variant="advanced"
+                  description="Manually run macOS posture checks when the backend is running on a Mac."
+                  onSelect={() => setFlowStep("macos")}
+                />
+                <ModeCard
+                  title="Linux Device Audit"
+                  status="Advanced/manual"
+                  variant="advanced"
+                  description="Manually run Linux posture checks, including container visibility in Docker."
+                  onSelect={() => setFlowStep("linux")}
+                />
+              </div>
+            </section>
           </div>
         </section>
       )}
 
       {flowStep === "guidance" && guidanceCatalog.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Defensive guidance</p>
-          <h2>Loading local catalog</h2>
-          <p className="muted">Reading the bundled D3FEND-informed guidance catalog.</p>
-        </section>
+        <LoadingState
+          kicker="Defensive guidance"
+          title="Loading local catalog"
+          message="Reading the bundled D3FEND-informed guidance catalog."
+        />
       )}
 
       {flowStep === "guidance" && guidanceCatalog.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Defensive guidance</p>
-          <h2>Guidance catalog unavailable</h2>
-          <p>{guidanceCatalog.message}</p>
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </section>
+        <ErrorState
+          kicker="Defensive guidance"
+          title="Guidance catalog unavailable"
+          message={guidanceCatalog.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "guidance" && guidanceCatalog.state === "ready" && (
@@ -688,6 +811,10 @@ export default function App() {
           error={networkReport.state === "error" ? networkReport.message : null}
           onRun={runNetworkAwareness}
           onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
         />
       )}
 
@@ -704,23 +831,28 @@ export default function App() {
           onLoadDemo={loadDemoDeviceInventory}
           onRun={runDeviceInventoryReport}
           onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
         />
       )}
 
       {flowStep === "questionnaire" && questionnaire.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Questionnaire</p>
-          <h2>Loading checklist</h2>
-          <p className="muted">Fetching local questionnaire questions from the backend.</p>
-        </section>
+        <LoadingState
+          kicker="Questionnaire"
+          title="Loading checklist"
+          message="Fetching local questionnaire questions from the backend."
+        />
       )}
 
       {flowStep === "questionnaire" && questionnaire.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Questionnaire</p>
-          <h2>Checklist unavailable</h2>
-          <p>{questionnaire.message}</p>
-        </section>
+        <ErrorState
+          kicker="Questionnaire"
+          title="Checklist unavailable"
+          message={questionnaire.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "questionnaire" && questionnaire.state === "ready" && (
@@ -736,19 +868,20 @@ export default function App() {
       )}
 
       {flowStep === "full-questionnaire" && questionnaire.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Full report</p>
-          <h2>Loading checklist</h2>
-          <p className="muted">Fetching local questionnaire questions from the backend.</p>
-        </section>
+        <LoadingState
+          kicker="Full report"
+          title="Loading checklist"
+          message="Fetching local questionnaire questions from the backend."
+        />
       )}
 
       {flowStep === "full-questionnaire" && questionnaire.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Full report</p>
-          <h2>Checklist unavailable</h2>
-          <p>{questionnaire.message}</p>
-        </section>
+        <ErrorState
+          kicker="Full report"
+          title="Checklist unavailable"
+          message={questionnaire.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "full-questionnaire" && questionnaire.state === "ready" && (
@@ -870,22 +1003,20 @@ export default function App() {
       )}
 
       {flowStep === "combined-results" && combinedReport.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Full report</p>
-          <h2>Building combined report</h2>
-          <p className="muted">Combining selected findings in memory.</p>
-        </section>
+        <LoadingState
+          kicker="Full report"
+          title="Building combined report"
+          message="Combining selected findings in memory."
+        />
       )}
 
       {flowStep === "combined-results" && combinedReport.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Full report</p>
-          <h2>Combined report unavailable</h2>
-          <p>{combinedReport.message}</p>
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </section>
+        <ErrorState
+          kicker="Full report"
+          title="Combined report unavailable"
+          message={combinedReport.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "combined-results" && combinedReport.state === "ready" && (
@@ -895,154 +1026,163 @@ export default function App() {
           onExportMarkdown={exportMarkdown}
           onExportJson={exportJson}
           onBackToModes={() => setFlowStep("mode")}
+          onClearReport={clearCurrentReport}
         />
       )}
 
       {flowStep === "results" && questionnaireReport.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Results</p>
-          <h2>Building questionnaire report</h2>
-          <p className="muted">Creating local questionnaire-derived findings.</p>
-        </section>
+        <LoadingState
+          kicker="Results"
+          title="Building questionnaire report"
+          message="Creating local questionnaire-derived findings."
+        />
       )}
 
       {flowStep === "results" && questionnaireReport.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Results</p>
-          <h2>Questionnaire report unavailable</h2>
-          <p>{questionnaireReport.message}</p>
-        </section>
+        <ErrorState
+          kicker="Results"
+          title="Questionnaire report unavailable"
+          message={questionnaireReport.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "results" && questionnaireReport.state === "ready" && (
         <QuestionnaireResults
           report={questionnaireReport.report}
           onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
         />
       )}
 
       {flowStep === "demo" && demoReport.state === "loading" && (
-        <section className="loading-panel">
-          <p className="section-kicker">Demo dashboard</p>
-          <h2>Loading sample report</h2>
-          <p className="muted">Fetching static demo findings from the local backend.</p>
-        </section>
+        <LoadingState
+          kicker="Demo dashboard"
+          title="Loading sample report"
+          message="Fetching static demo findings from the local backend."
+        />
       )}
 
       {flowStep === "demo" && demoReport.state === "error" && (
-        <section className="loading-panel loading-panel--error">
-          <p className="section-kicker">Demo dashboard</p>
-          <h2>Sample report unavailable</h2>
-          <p>{demoReport.message}</p>
-        </section>
+        <ErrorState
+          kicker="Demo dashboard"
+          title="Sample report unavailable"
+          message={demoReport.message}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "demo" && demoReport.state === "ready" && (
-        <>
-          <DemoDashboard report={demoReport.report} />
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </>
+        <DemoDashboard
+          report={demoReport.report}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onBackToModes={() => setFlowStep("mode")}
+          onClearReport={clearCurrentReport}
+        />
       )}
 
       {flowStep === "local" && (
-        <>
-          <LocalAuditPanel
-            platformName="Local Device"
-            panelKicker="Local Device Audit"
-            heading="Auto-detected local device checks"
-            description="AI HomeGuard will choose the right local checks for this runtime. Read-only checks only; no settings are changed, no network scan is run, and no data is uploaded."
-            runLabel="Run Local Device Audit"
-            loadingLabel="Running Local Device Audit"
-            findingsHeading="Local Device Findings"
-            unsupportedTitle="Local device checks are unavailable here"
-            unsupportedBody="AI HomeGuard could not match this runtime to a supported local platform. You are seeing a safe limited-visibility result."
-            runtimeContext={runtimeContext.state === "ready" ? runtimeContext.context : null}
-            runtimeLoading={runtimeContext.state === "loading"}
-            runtimeError={runtimeContext.state === "error" ? runtimeContext.message : null}
-            dockerNote={dockerRuntimeNote}
-            report={localReport.state === "ready" ? localReport.report : null}
-            loading={localReport.state === "loading"}
-            error={localReport.state === "error" ? localReport.message : null}
-            onRun={runLocalDeviceAudit}
-          />
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </>
+        <LocalAuditPanel
+          platformName="Local Device"
+          panelKicker="Local Device Audit"
+          heading="Auto-detected local device checks"
+          description="AI HomeGuard will choose the right local checks for this runtime. Read-only checks only; no settings are changed, no network scan is run, and no data is uploaded."
+          runLabel="Run Local Device Audit"
+          loadingLabel="Running Local Device Audit"
+          findingsHeading="Local Device Findings"
+          unsupportedTitle="Local device checks are unavailable here"
+          unsupportedBody="AI HomeGuard could not match this runtime to a supported local platform. You are seeing a safe limited-visibility result."
+          runtimeContext={runtimeContext.state === "ready" ? runtimeContext.context : null}
+          runtimeLoading={runtimeContext.state === "loading"}
+          runtimeError={runtimeContext.state === "error" ? runtimeContext.message : null}
+          dockerNote={dockerRuntimeNote}
+          report={localReport.state === "ready" ? localReport.report : null}
+          loading={localReport.state === "loading"}
+          error={localReport.state === "error" ? localReport.message : null}
+          onRun={runLocalDeviceAudit}
+          onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
+        />
       )}
 
       {flowStep === "windows" && (
-        <>
-          <LocalAuditPanel
-            platformName="Windows"
-            panelKicker="Windows Device Audit"
-            heading="Read-only local Windows checks"
-            description="This mode asks the local backend for Windows posture findings. No settings are changed, no network scan is run, and no data is uploaded."
-            runLabel="Run Windows Local Check"
-            loadingLabel="Running Read-Only Check"
-            findingsHeading="Windows Findings"
-            unsupportedTitle="Windows checks are unavailable here"
-            unsupportedBody="Windows checks can only run when AI HomeGuard is running on a Windows computer. You are seeing a safe unsupported-platform result."
-            dockerNote={dockerRuntimeNote}
-            report={windowsReport.state === "ready" ? windowsReport.report : null}
-            loading={windowsReport.state === "loading"}
-            error={windowsReport.state === "error" ? windowsReport.message : null}
-            onRun={runWindowsLocalCheck}
-          />
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </>
+        <LocalAuditPanel
+          platformName="Windows"
+          panelKicker="Windows Device Audit"
+          heading="Read-only local Windows checks"
+          description="This mode asks the local backend for Windows posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+          runLabel="Run Windows Local Check"
+          loadingLabel="Running Read-Only Check"
+          findingsHeading="Windows Findings"
+          unsupportedTitle="Windows checks are unavailable here"
+          unsupportedBody="Windows checks can only run when AI HomeGuard is running on a Windows computer. You are seeing a safe unsupported-platform result."
+          dockerNote={dockerRuntimeNote}
+          report={windowsReport.state === "ready" ? windowsReport.report : null}
+          loading={windowsReport.state === "loading"}
+          error={windowsReport.state === "error" ? windowsReport.message : null}
+          onRun={runWindowsLocalCheck}
+          onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
+        />
       )}
 
       {flowStep === "macos" && (
-        <>
-          <LocalAuditPanel
-            platformName="macOS"
-            panelKicker="macOS Device Audit"
-            heading="Read-only local macOS checks"
-            description="This mode asks the local backend for macOS posture findings. No settings are changed, no network scan is run, and no data is uploaded."
-            runLabel="Run macOS Local Check"
-            loadingLabel="Running Read-Only Check"
-            findingsHeading="macOS Findings"
-            unsupportedTitle="macOS checks are unavailable here"
-            unsupportedBody="macOS checks can only run when AI HomeGuard is running on a Mac. You are seeing a safe unsupported-platform result."
-            dockerNote={dockerRuntimeNote}
-            report={macosReport.state === "ready" ? macosReport.report : null}
-            loading={macosReport.state === "loading"}
-            error={macosReport.state === "error" ? macosReport.message : null}
-            onRun={runMacOSLocalCheck}
-          />
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </>
+        <LocalAuditPanel
+          platformName="macOS"
+          panelKicker="macOS Device Audit"
+          heading="Read-only local macOS checks"
+          description="This mode asks the local backend for macOS posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+          runLabel="Run macOS Local Check"
+          loadingLabel="Running Read-Only Check"
+          findingsHeading="macOS Findings"
+          unsupportedTitle="macOS checks are unavailable here"
+          unsupportedBody="macOS checks can only run when AI HomeGuard is running on a Mac. You are seeing a safe unsupported-platform result."
+          dockerNote={dockerRuntimeNote}
+          report={macosReport.state === "ready" ? macosReport.report : null}
+          loading={macosReport.state === "loading"}
+          error={macosReport.state === "error" ? macosReport.message : null}
+          onRun={runMacOSLocalCheck}
+          onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
+        />
       )}
 
       {flowStep === "linux" && (
-        <>
-          <LocalAuditPanel
-            platformName="Linux"
-            panelKicker="Linux Device Audit"
-            heading="Read-only local Linux checks"
-            description="This mode asks the local backend for Linux posture findings. No settings are changed, no network scan is run, and no data is uploaded."
-            runLabel="Run Linux Local Check"
-            loadingLabel="Running Read-Only Check"
-            findingsHeading="Linux Findings"
-            unsupportedTitle="Linux checks are unavailable here"
-            unsupportedBody="Linux checks can only run when AI HomeGuard is running on a Linux computer. You are seeing a safe unsupported-platform result."
-            dockerNote={dockerRuntimeNote}
-            report={linuxReport.state === "ready" ? linuxReport.report : null}
-            loading={linuxReport.state === "loading"}
-            error={linuxReport.state === "error" ? linuxReport.message : null}
-            onRun={runLinuxLocalCheck}
-          />
-          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
-            Back to Modes
-          </button>
-        </>
+        <LocalAuditPanel
+          platformName="Linux"
+          panelKicker="Linux Device Audit"
+          heading="Read-only local Linux checks"
+          description="This mode asks the local backend for Linux posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+          runLabel="Run Linux Local Check"
+          loadingLabel="Running Read-Only Check"
+          findingsHeading="Linux Findings"
+          unsupportedTitle="Linux checks are unavailable here"
+          unsupportedBody="Linux checks can only run when AI HomeGuard is running on a Linux computer. You are seeing a safe unsupported-platform result."
+          dockerNote={dockerRuntimeNote}
+          report={linuxReport.state === "ready" ? linuxReport.report : null}
+          loading={linuxReport.state === "loading"}
+          error={linuxReport.state === "error" ? linuxReport.message : null}
+          onRun={runLinuxLocalCheck}
+          onBackToModes={() => setFlowStep("mode")}
+          exportStatus={exportStatus}
+          onExportMarkdown={exportMarkdown}
+          onExportJson={exportJson}
+          onClearReport={clearCurrentReport}
+        />
       )}
 
       <StatusPanel />

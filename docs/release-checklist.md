@@ -8,6 +8,21 @@
 - Required docs present
 - Backend tests pass
 - Frontend build passes
+- Frontend tests pass
+- Home page makes Full HomeGuard Report the recommended path
+- Demo Mode, Local Device Audit, Home Security Questionnaire, Device Inventory Helper, and Local Network Awareness remain visible
+- Advanced/manual Windows, macOS, and Linux checks remain available but visually de-emphasized
+- Shared report review panel renders summary, counts, top actions, findings, safety notes, limitations, and export controls
+- Finding filters work for status, platform, evidence source, sorting, and show/hide good findings
+- Evidence source badges clearly distinguish questionnaire, local device, demo, passive network awareness, manual inventory, demo inventory, runtime context, and unsupported platform findings
+- D3FEND-informed guidance is labeled educational and not a guarantee
+- Technical details are collapsed or secondary by default
+- Loading, error, and empty states are text-visible and calm
+- Start Over and Clear Current Report clear in-memory frontend state only
+- Responsive layout smoke check passes on desktop, laptop, tablet-ish, and mobile-ish widths
+- Accessibility basics pass: heading structure, labels, clickable checkbox labels, visible focus states, text-visible status/error states, and no icon-only controls
+- Forbidden language review passes for automatic repair, compromise, certification, guarantee, offensive-test, exhaustive-scan, complete-security, or official-certification claims
+- Export review check passes: Markdown/JSON exports are user-triggered and copy reminds users to review exports before sharing
 - Docker build and smoke test pass
 - Finding/report model serialization tests pass
 - Demo report route validation passes

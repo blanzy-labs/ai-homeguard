@@ -38,6 +38,20 @@ curl http://localhost:8000/health
 
 If the backend is on a non-default URL, set `VITE_API_BASE_URL` for the frontend.
 
+The footer status panel shows `Backend unavailable` when the browser cannot reach the local API. Confirm the backend is running on port 8000, then refresh the frontend.
+
+## Report Generation Failed
+
+Report screens show a text-visible error when a route returns a validation error or the backend is unavailable. Check the relevant API directly, then retry from the frontend:
+
+```bash
+curl http://localhost:8000/demo/report
+curl http://localhost:8000/reports/local-device
+curl http://localhost:8000/knowledge/d3fend-guidance
+```
+
+For combined reports, confirm required acknowledgements are checked and that Device Inventory Helper has at least one manual device or loaded demo inventory before including inventory findings.
+
 ## Backend Health Check Fails
 
 Run the backend directly and inspect the terminal output:
@@ -77,6 +91,10 @@ macOS local checks only run when AI HomeGuard is running directly on macOS. On W
 
 Linux local checks only run when AI HomeGuard is running on Linux. On Windows or macOS, `/reports/linux-local` returns an unsupported-platform report and does not run Linux commands.
 
+## Unsupported Platform Result
+
+Unsupported-platform results are expected when a platform-specific route is opened from the wrong operating system or when the runtime cannot be matched safely. AI HomeGuard returns `unable_to_check` findings instead of running commands for the wrong platform.
+
 ## Docker Platform Looks Different From the Host
 
 Docker Compose runs the backend inside a Linux container. On a Mac host, `/reports/macos-local` returns unsupported-platform output in Docker, and `/reports/linux-local` checks the container environment rather than the Mac. Run the backend natively with `uv run uvicorn app.main:app --reload` for true host macOS checks.
@@ -109,9 +127,21 @@ If `include_questionnaire` is true, `/reports/combined` requires a questionnaire
 
 Markdown and JSON exports are created only after clicking an export button. If the browser blocks the download, check browser download permissions for `localhost:5173` or use the backend export response directly.
 
+## Export Failed
+
+Export status appears in the report review panel after clicking Export Markdown or Export JSON. If export fails, confirm the backend is running and rebuild the report before exporting again. Exports are not saved automatically, so review the downloaded file before sharing.
+
 ## Markdown Export Is Missing Findings
 
 Markdown export renders the `HomeGuardReport` sent to `/reports/export/markdown`. If it has no findings, rebuild the combined report and confirm questionnaire answers or local audit findings were included.
+
+## Filters Hide All Findings
+
+The report review filters can hide findings by status, platform, evidence source, or the Show good findings checkbox. Set Status, Platform, and Evidence source back to their `All` options and turn on Show good findings to restore the full finding list.
+
+## Technical Details Are Collapsed
+
+Finding cards keep technical details and evidence collapsed by default. Open the Technical details and evidence toggle on a finding to review evidence, technical title, and educational ATT&CK context when present.
 
 ## Guidance Catalog Route Is Unavailable
 

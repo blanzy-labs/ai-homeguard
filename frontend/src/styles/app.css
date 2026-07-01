@@ -27,6 +27,15 @@ select {
   font: inherit;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #1f6fb2;
+  outline-offset: 2px;
+}
+
 .app-shell {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -43,10 +52,15 @@ select {
   padding-bottom: 18px;
 }
 
-.brand-row {
+.brand-row,
+.brand-identity {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.brand-row {
+  justify-content: space-between;
   color: #506079;
   font-weight: 700;
 }
@@ -144,6 +158,11 @@ h3 {
   color: #31415a;
 }
 
+.secondary-button--compact {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled {
   border-color: #c8ced6;
@@ -237,6 +256,41 @@ h3 {
   gap: 14px;
 }
 
+.mode-sections,
+.mode-group {
+  display: grid;
+  gap: 16px;
+}
+
+.mode-group {
+  padding: 18px;
+  border: 1px solid #d6d9d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.mode-group--recommended {
+  border-color: #91b8ad;
+  background: #f7fbf8;
+}
+
+.mode-group--advanced {
+  background: #f4f6f8;
+}
+
+.mode-group__header {
+  display: grid;
+  gap: 2px;
+}
+
+.mode-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mode-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
 .mode-card {
   display: grid;
   min-height: 190px;
@@ -253,6 +307,28 @@ h3 {
 
 .mode-card:hover:not(:disabled) {
   border-color: #0d6759;
+}
+
+.mode-card--recommended {
+  min-height: 150px;
+  border-color: #91b8ad;
+  border-left: 5px solid #0d6759;
+  background: #ffffff;
+}
+
+.mode-card--recommended strong {
+  font-size: 1.24rem;
+}
+
+.mode-card--advanced {
+  min-height: 150px;
+  border-style: dashed;
+  background: #fbfcfd;
+}
+
+.mode-card--advanced span {
+  background: #e7edf3;
+  color: #40536a;
 }
 
 .mode-card:disabled {
@@ -587,6 +663,58 @@ h3 {
   gap: 12px;
 }
 
+.report-review {
+  gap: 18px;
+}
+
+.finding-filters {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #d6d9d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-checkbox {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #cad2d8;
+  border-radius: 8px;
+  background: #f6f7f4;
+  color: #31415a;
+  font-weight: 800;
+}
+
+.filter-checkbox input {
+  accent-color: #0d6759;
+}
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #d6d9d1;
+  border-radius: 8px;
+  background: #f6f7f4;
+  color: #34445d;
+}
+
+.empty-state strong {
+  color: #101827;
+}
+
 .guidance-catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -791,6 +919,13 @@ h3 {
   gap: 16px;
 }
 
+.finding-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .finding-card__header h3 {
   margin-top: 4px;
   font-size: 1.18rem;
@@ -806,6 +941,20 @@ h3 {
   color: #31415a;
   font-size: 0.82rem;
   font-weight: 800;
+  text-align: center;
+}
+
+.source-badge {
+  align-self: start;
+  max-width: 220px;
+  padding: 7px 10px;
+  border: 1px solid #b8c8d8;
+  border-radius: 999px;
+  background: #eef5fb;
+  color: #234a66;
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
   text-align: center;
 }
 
@@ -976,6 +1125,7 @@ h3 {
   .count-grid,
   .welcome-panel,
   .mode-grid,
+  .filter-grid,
   .form-grid,
   .finding-meta,
   .detail-list,
@@ -984,8 +1134,16 @@ h3 {
     grid-template-columns: 1fr;
   }
 
-  .finding-card__header {
+  .brand-row,
+  .finding-card__header,
+  .inventory-editor__header,
+  .inventory-device-editor__header {
     display: grid;
+    align-items: stretch;
+  }
+
+  .finding-card__badges {
+    justify-content: flex-start;
   }
 
   .intro {
@@ -1000,7 +1158,12 @@ h3 {
   .welcome-actions .primary-button,
   .welcome-actions .secondary-button,
   .flow-actions .primary-button,
-  .flow-actions .secondary-button {
+  .flow-actions .secondary-button,
+  .export-actions .secondary-button {
+    width: 100%;
+  }
+
+  .filter-checkbox {
     width: 100%;
   }
 }

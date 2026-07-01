@@ -8,7 +8,7 @@ import type {
   HomeGuardReport,
   RouterGuidanceResponse,
 } from "../api/client";
-import { FindingCard } from "./FindingCard";
+import { ReportReviewPanel } from "./ReportReviewPanel";
 
 type DeviceInventoryPanelProps = {
   submission: DeviceInventorySubmission;
@@ -22,6 +22,10 @@ type DeviceInventoryPanelProps = {
   onLoadDemo: () => void;
   onRun: () => void;
   onBackToModes: () => void;
+  exportStatus?: string | null;
+  onExportMarkdown?: (report: HomeGuardReport) => void;
+  onExportJson?: (report: HomeGuardReport) => void;
+  onClearReport?: () => void;
 };
 
 const deviceTypeOptions: Array<{ value: DeviceType; label: string }> = [
@@ -102,6 +106,10 @@ export function DeviceInventoryPanel({
   onLoadDemo,
   onRun,
   onBackToModes,
+  exportStatus,
+  onExportMarkdown,
+  onExportJson,
+  onClearReport,
 }: DeviceInventoryPanelProps) {
   function updateSubmission(update: Partial<DeviceInventorySubmission>) {
     onSubmissionChange({
@@ -347,51 +355,18 @@ export function DeviceInventoryPanel({
       ) : null}
 
       {report ? (
-        <section className="results-panel" aria-labelledby="inventory-results-heading">
-          <div className="dashboard-summary">
-            <div>
-              <p className="section-kicker">Device inventory report</p>
-              <h2 id="inventory-results-heading">Manual Device Inventory</h2>
-              <p className="muted">{report.disclaimer}</p>
-            </div>
-            <div className="overall-status">
-              <span>Overall status</span>
-              <strong>{formatStatus(report.summary.overall_status)}</strong>
-              {report.summary.overall_score !== null && report.summary.overall_score !== undefined ? (
-                <p>{report.summary.overall_score}/100 inventory score</p>
-              ) : null}
-            </div>
-          </div>
-
-          {report.summary.top_actions.length ? (
-            <section className="action-plan" aria-labelledby="inventory-actions-heading">
-              <h2 id="inventory-actions-heading">Suggested Next Steps</h2>
-              <ol>
-                {report.summary.top_actions.map((action) => (
-                  <li key={action}>{action}</li>
-                ))}
-              </ol>
-            </section>
-          ) : null}
-
-          <section className="safety-notes" aria-labelledby="inventory-safety-heading">
-            <h2 id="inventory-safety-heading">Safety Notes and Limitations</h2>
-            <ul>
-              {report.safety_notes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="findings-section" aria-labelledby="inventory-findings-heading">
-            <h2 id="inventory-findings-heading">Device Inventory Findings</h2>
-            <div className="findings-list">
-              {report.findings.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} />
-              ))}
-            </div>
-          </section>
-        </section>
+        <ReportReviewPanel
+          report={report}
+          kicker="Device inventory report"
+          heading="Manual Device Inventory"
+          scoreLabel="inventory score"
+          findingsHeading="Device Inventory Findings"
+          exportStatus={exportStatus}
+          onExportMarkdown={onExportMarkdown}
+          onExportJson={onExportJson}
+          onBackToModes={onBackToModes}
+          onClearReport={onClearReport}
+        />
       ) : null}
     </section>
   );

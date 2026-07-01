@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 10 includes:
+Slice 11 includes:
 
 - No telemetry
 - No database
@@ -21,6 +21,8 @@ Slice 10 includes:
 - Authorization-gated passive local network awareness
 - Manual/demo device inventory helper
 - Generic vendor-neutral router guidance
+- Frontend report review polish with shared report, finding, filter, export, loading, error, and empty states
+- Start Over and Clear Current Report controls that clear in-memory frontend state only
 - Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
@@ -31,6 +33,7 @@ Slice 10 includes:
 - Static fake demo data only
 - Questionnaire answers kept in browser memory and submitted only to the local backend
 - No questionnaire answer persistence
+- No browser persistence of questionnaire answers, device inventory entries, reports, or export status
 - No automatic report persistence
 
 AI HomeGuard does not exploit, brute-force, capture credentials, sniff packets, or attack targets.
@@ -41,17 +44,17 @@ The `/demo/report` endpoint returns a deterministic fake report for UI developme
 
 The questionnaire avoids passwords, credentials, addresses, usernames, email addresses, IP addresses, MAC addresses, and other personal identifiers. Users should not enter secrets or identifying details into questionnaire fields.
 
-The questionnaire endpoints do not upload data to an external service and do not write answers to disk. The returned report is generated in memory from the submitted answers.
+The questionnaire endpoints do not upload data to an external service and do not write answers to disk. The returned report is generated in memory from the submitted answers. The Slice 11 frontend stores answers and reports in React state only; it does not use `localStorage`, `sessionStorage`, IndexedDB, cookies, or telemetry.
 
 Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement. If device inventory findings are requested, the request must include manual/demo inventory data.
 
-Markdown and JSON exports are user-triggered. The backend returns export content to the browser or caller; it does not save a copy. Exported reports may contain user-provided questionnaire answers and local audit evidence, so users should review exports before sharing them.
+Markdown and JSON exports are user-triggered. The backend returns export content to the browser or caller; it does not save a copy. The frontend creates browser downloads only after an export button is clicked. Exported reports may contain user-provided questionnaire answers, manual inventory labels, and local audit evidence, so users should review exports before sharing them.
 
 The D3FEND-informed guidance catalog is local and static. AI HomeGuard does not fetch live MITRE data, call an AI provider, send telemetry, persist catalog lookups, or change settings while enriching guidance. Guidance is educational and may be incomplete.
 
-Network awareness authorization is request-level only and is not stored. Slice 9 uses passive local context only. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
+Network awareness authorization is request-level only and is not stored. Slice 9 uses passive local context only. Slice 11 keeps the authorization language visible in the frontend before the report can run. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
 
-Device inventory is manual/demo only in Slice 10. AI HomeGuard does not discover devices automatically, scan the network, send packets, fingerprint devices, log in to routers, request router credentials, capture packets, or upload inventory data. Hostnames, IP addresses, MAC addresses, personal names, exact room locations, and serial numbers are not required. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked.
+Device inventory is manual/demo only. AI HomeGuard does not discover devices automatically, scan the network, send packets, fingerprint devices, log in to routers, request router credentials, capture packets, or upload inventory data. Slice 11 labels inventory findings as Manual Device Inventory or Demo Device Inventory so the UI does not imply automatic detection. Hostnames, IP addresses, MAC addresses, personal names, exact room locations, and serial numbers are not required. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked.
 
 Router guidance is local, generic, and vendor-neutral. It does not provide exploit instructions, default router passwords, router bypass guidance, or router-login automation. Users should use their router app/admin page as the source of truth and should not enter router passwords into AI HomeGuard.
 
@@ -70,6 +73,8 @@ Windows, macOS, and Linux listening ports are local-only socket summaries. AI Ho
 Network awareness may run read-only local route or neighbor-cache visibility commands when authorized. These commands are passive local context only and do not send packets to other devices. In Docker, network context may reflect the container network instead of the home network.
 
 The local Administrators group check reports counts and categories only. Full local administrator usernames are intentionally not included in user-facing findings.
+
+Slice 11 source labels and badges are user-facing labels derived from existing report evidence and tags. They do not add new backend collection, scanning, storage, or telemetry.
 
 On unsupported platforms, local check routes return an unsupported-platform report and do not run commands for the wrong operating system. In Docker, the backend sees the container operating system rather than the host, so unified local audit results may describe the container environment.
 

@@ -1,5 +1,5 @@
 import type { HomeGuardReport } from "../api/client";
-import { FindingCard } from "./FindingCard";
+import { ReportReviewPanel } from "./ReportReviewPanel";
 
 type NetworkAwarenessPanelProps = {
   acknowledged: boolean;
@@ -9,14 +9,11 @@ type NetworkAwarenessPanelProps = {
   error: string | null;
   onRun: () => void;
   onBackToModes: () => void;
+  exportStatus?: string | null;
+  onExportMarkdown?: (report: HomeGuardReport) => void;
+  onExportJson?: (report: HomeGuardReport) => void;
+  onClearReport?: () => void;
 };
-
-function formatStatus(value: string) {
-  return value
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
 
 export function NetworkAwarenessPanel({
   acknowledged,
@@ -26,6 +23,10 @@ export function NetworkAwarenessPanel({
   error,
   onRun,
   onBackToModes,
+  exportStatus,
+  onExportMarkdown,
+  onExportJson,
+  onClearReport,
 }: NetworkAwarenessPanelProps) {
   return (
     <section className="local-audit-panel" aria-labelledby="network-awareness-heading">
@@ -84,51 +85,18 @@ export function NetworkAwarenessPanel({
       ) : null}
 
       {report ? (
-        <section className="results-panel" aria-labelledby="network-results-heading">
-          <div className="dashboard-summary">
-            <div>
-              <p className="section-kicker">Network awareness report</p>
-              <h2 id="network-results-heading">Network Awareness Foundation</h2>
-              <p className="muted">{report.disclaimer}</p>
-            </div>
-            <div className="overall-status">
-              <span>Overall status</span>
-              <strong>{formatStatus(report.summary.overall_status)}</strong>
-              {report.summary.overall_score !== null && report.summary.overall_score !== undefined ? (
-                <p>{report.summary.overall_score}/100 awareness score</p>
-              ) : null}
-            </div>
-          </div>
-
-          {report.summary.top_actions.length ? (
-            <section className="action-plan" aria-labelledby="network-actions-heading">
-              <h2 id="network-actions-heading">Suggested Next Steps</h2>
-              <ol>
-                {report.summary.top_actions.map((action) => (
-                  <li key={action}>{action}</li>
-                ))}
-              </ol>
-            </section>
-          ) : null}
-
-          <section className="safety-notes" aria-labelledby="network-safety-heading">
-            <h2 id="network-safety-heading">Safety Notes and Limitations</h2>
-            <ul>
-              {report.safety_notes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="findings-section" aria-labelledby="network-findings-heading">
-            <h2 id="network-findings-heading">Network Awareness Findings</h2>
-            <div className="findings-list">
-              {report.findings.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} />
-              ))}
-            </div>
-          </section>
-        </section>
+        <ReportReviewPanel
+          report={report}
+          kicker="Network awareness report"
+          heading="Network Awareness Foundation"
+          scoreLabel="awareness score"
+          findingsHeading="Network Awareness Findings"
+          exportStatus={exportStatus}
+          onExportMarkdown={onExportMarkdown}
+          onExportJson={onExportJson}
+          onBackToModes={onBackToModes}
+          onClearReport={onClearReport}
+        />
       ) : null}
     </section>
   );
