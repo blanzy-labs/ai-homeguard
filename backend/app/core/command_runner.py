@@ -17,8 +17,13 @@ class CommandResult(BaseModel):
 
 
 class SafeCommandRunner:
-    def __init__(self, allowed_commands: dict[str, tuple[str, ...]]) -> None:
+    def __init__(
+        self,
+        allowed_commands: dict[str, tuple[str, ...]],
+        required_platform: LocalPlatform = LocalPlatform.WINDOWS,
+    ) -> None:
         self.allowed_commands = allowed_commands
+        self.required_platform = required_platform
 
     def run(
         self,
@@ -28,11 +33,14 @@ class SafeCommandRunner:
         platform_name: LocalPlatform | None = None,
     ) -> CommandResult:
         active_platform = platform_name or current_platform()
-        if active_platform != LocalPlatform.WINDOWS:
+        if active_platform != self.required_platform:
             return CommandResult(
                 command_name=command_name,
                 supported=False,
-                error=f"Unsupported platform for Windows check: {active_platform.value}",
+                error=(
+                    f"Unsupported platform for {self.required_platform.value} check: "
+                    f"{active_platform.value}"
+                ),
             )
 
         allowed_prefix = self.allowed_commands.get(command_name)

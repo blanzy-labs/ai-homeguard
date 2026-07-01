@@ -2,18 +2,18 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 4 Components
+## Current Slice 5 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
 - Demo data: deterministic static `HomeGuardReport` returned by `/demo/report`
 - Questionnaire: static friendly questions, local answer submission, and deterministic finding mapper
-- Windows local checks: read-only platform-guarded check modules and report aggregator
-- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, Windows audit panel, results, and demo dashboard UI
+- Windows, macOS, and Linux local checks: read-only platform-guarded check modules and report aggregators
+- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 4 adds the first real platform-check foundation for Windows. It does not include remediation, network scanning, OpenAI calls, AI provider integrations, persistence, or live D3FEND mapping logic.
+Slice 5 extends the platform-check foundation to Windows, macOS, and Linux. It does not include remediation, network scanning, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, or live D3FEND mapping logic.
 
 ## Finding and Report Model
 
@@ -65,10 +65,12 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/core/platform.py`: detects `windows`, `macos`, `linux`, or `unknown`
 - `backend/app/core/command_runner.py`: runs allowlisted commands with timeouts and captured output
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
-- `backend/app/checks/windows/*.py`: individual read-only check modules
-- `backend/app/checks/windows/runner.py`: Windows audit aggregator that returns `HomeGuardReport`
+- `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
+- `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers
+- `backend/app/checks/<platform>/*.py`: individual read-only check modules
+- `backend/app/checks/<platform>/runner.py`: platform audit aggregators that return `HomeGuardReport`
 
-Windows checks only run when the current platform is Windows. On macOS or Linux, `/reports/windows-local` returns an unsupported-platform report and does not invoke Windows commands.
+Platform checks only run when the current platform matches the route. Unsupported platform routes return informational `unable_to_check` reports and do not invoke commands for the wrong operating system.
 
 ## Windows Check Modules
 
@@ -84,9 +86,35 @@ Slice 4 includes read-only modules for:
 
 The local administrator check intentionally summarizes counts and categories instead of exposing full account names in user-facing output.
 
+## macOS Check Modules
+
+Slice 5 includes read-only modules for:
+
+- Application Firewall status via `socketfilterfw --getglobalstate`
+- FileVault status via `fdesetup status`
+- Gatekeeper status via `spctl --status`
+- Remote Login status via `systemsetup -getremotelogin`
+- Local listening TCP port summary via `lsof` with `netstat` fallback
+- Light macOS version and update visibility via `sw_vers`
+
+The listening-port check reports unique ports and generic service hints only. It does not report usernames, file paths, process command arguments, or remote scan results.
+
+## Linux Check Modules
+
+Slice 5 includes read-only modules for:
+
+- Common firewall visibility via `ufw`, `firewall-cmd`, and `systemctl is-active firewalld`
+- SSH service visibility via `systemctl` and `service`
+- Local listening port summary via `ss` with `netstat` fallback
+- ClamAV presence via `clamscan --version` or `freshclam --version`
+- Light distribution, kernel, and update visibility via `/etc/os-release` and `uname -r`
+- Cautious disk encryption visibility via `lsblk -f`
+
+The ClamAV check never scans files. The disk encryption check reports `unable_to_check` when limited `lsblk` output cannot confirm encryption, rather than asserting encryption is off.
+
 ## Mocked Test Strategy
 
-Development currently happens on a Mac Mini, so Windows tests use fake command results and monkeypatched platform detection. Tests verify non-Windows unsupported behavior, mocked Windows output mapping, D3FEND guidance presence, timeout handling, and privacy-safe local administrator summaries without requiring a Windows machine or running PowerShell.
+Development currently happens on a Mac Mini. Windows and Linux behavior is validated with fake command results and monkeypatched platform detection. macOS mapping is also covered by mocked outputs so tests do not depend on the developer machine's exact settings. Tests verify unsupported behavior, mocked output mapping, D3FEND guidance presence, command safety, and privacy-safe summaries without requiring Windows, Linux host access, real PowerShell, sudo, package updates, or file scans.
 
 ## Planned Modules
 
@@ -94,6 +122,6 @@ Development currently happens on a Mac Mini, so Windows tests use fake command r
 - `knowledge/D3FEND`: D3FEND-informed defensive guidance references
 - `reports`: plain-English local report generation
 - `questionnaire`: beginner-friendly user inputs and context
-- `platform adapters`: Windows, macOS, and Linux check implementations
+- `platform adapters`: future router and network-aware implementations
 
-Future slices may add Windows, macOS, and Linux security checks. Those checks should stay defensive, local-first, and explicit about user authorization.
+Future slices may unify platform reports or add explicitly authorized network-aware checks. Those checks should stay defensive, local-first, and explicit about user authorization.

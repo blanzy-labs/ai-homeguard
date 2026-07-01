@@ -197,3 +197,11 @@ export async function getQuestionnaireReport(
 export async function getWindowsLocalReport(): Promise<HomeGuardReport> {
   return getJson<HomeGuardReport>("/reports/windows-local");
 }
+
+export async function getMacOSLocalReport(): Promise<HomeGuardReport> {
+  return getJson<HomeGuardReport>("/reports/macos-local");
+}
+
+export async function getLinuxLocalReport(): Promise<HomeGuardReport> {
+  return getJson<HomeGuardReport>("/reports/linux-local");
+}

@@ -21,10 +21,18 @@
 - Windows command runner uses allowlisted read-only commands
 - Windows local check tests use mocked command output and do not require Windows
 - Windows local admin output does not expose full usernames in user-facing findings
+- macOS local check route validates native macOS behavior or unsupported-platform behavior where applicable
+- macOS command runner uses allowlisted read-only commands
+- macOS local check tests use mocked command output for deterministic mappings
+- Linux local check route validates mocked Linux behavior and unsupported-platform behavior on macOS/Windows
+- Linux command runner uses allowlisted read-only commands
+- Linux local check tests use mocked command output and do not require a real Linux host
+- Docker validation documents that Docker sees the Linux container, not the Mac host
+- No sudo/admin escalation commands included
+- No ClamAV file scans included
 - No network scan logic included yet
 - No Nmap integration included yet
 - No remediation/settings-change commands included yet
-- No macOS/Linux local check logic included yet
 - No AI provider code included yet
 - No unsupported feature claims
 - No tag movement

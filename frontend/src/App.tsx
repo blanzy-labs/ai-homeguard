@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   getDemoReport,
+  getLinuxLocalReport,
+  getMacOSLocalReport,
   getQuestionnaire,
   getQuestionnaireReport,
   getWindowsLocalReport,
@@ -9,13 +11,22 @@ import {
   type QuestionnaireSubmission,
 } from "./api/client";
 import { DemoDashboard } from "./components/DemoDashboard";
+import { LocalAuditPanel } from "./components/LocalAuditPanel";
 import { ModeCard } from "./components/ModeCard";
 import { QuestionnaireResults } from "./components/QuestionnaireResults";
 import { QuestionnaireScreen } from "./components/QuestionnaireScreen";
 import { StatusPanel } from "./components/StatusPanel";
-import { WindowsAuditPanel } from "./components/WindowsAuditPanel";
 
-type FlowStep = "welcome" | "safety" | "mode" | "questionnaire" | "results" | "demo" | "windows";
+type FlowStep =
+  | "welcome"
+  | "safety"
+  | "mode"
+  | "questionnaire"
+  | "results"
+  | "demo"
+  | "windows"
+  | "macos"
+  | "linux";
 
 type ReportState =
   | { state: "idle" }
@@ -37,6 +48,8 @@ export default function App() {
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<Record<string, string>>({});
   const [questionnaireReport, setQuestionnaireReport] = useState<ReportState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
+  const [macosReport, setMacosReport] = useState<ReportState>({ state: "idle" });
+  const [linuxReport, setLinuxReport] = useState<ReportState>({ state: "idle" });
   const [isSubmittingQuestionnaire, setIsSubmittingQuestionnaire] = useState(false);
 
   useEffect(() => {
@@ -116,6 +129,32 @@ export default function App() {
     }
   }
 
+  async function runMacOSLocalCheck() {
+    setMacosReport({ state: "loading" });
+    try {
+      const report = await getMacOSLocalReport();
+      setMacosReport({ state: "ready", report });
+    } catch (error) {
+      setMacosReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "macOS local report unavailable",
+      });
+    }
+  }
+
+  async function runLinuxLocalCheck() {
+    setLinuxReport({ state: "loading" });
+    try {
+      const report = await getLinuxLocalReport();
+      setLinuxReport({ state: "ready", report });
+    } catch (error) {
+      setLinuxReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Linux local report unavailable",
+      });
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className={flowStep === "welcome" ? "intro intro--welcome" : "intro intro--compact"}>
@@ -128,8 +167,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 3 guides you through safety notes and a
-          questionnaire before any real device or network checks exist.
+          A defensive home cyber hygiene helper. Slice 5 adds read-only Windows, macOS, and Linux
+          local checks with friendly unsupported-platform reports.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -141,7 +180,7 @@ export default function App() {
             <h2 id="welcome-heading">A calm checklist for home security basics</h2>
             <p className="muted">
               AI HomeGuard explains defensive steps in plain language and keeps this slice limited
-              to demo data and questionnaire answers.
+              to local read-only checks, demo data, and questionnaire answers.
             </p>
           </div>
           <div className="welcome-actions">
@@ -168,9 +207,12 @@ export default function App() {
 
           <ul className="safety-boundary-list">
             <li>Runs locally in your development environment.</li>
+            <li>Uses read-only device checks for Windows, macOS, and Linux.</li>
+            <li>Returns an unsupported-platform report when a check cannot run here.</li>
+            <li>Does not request sudo, administrator escalation, or passwords.</li>
             <li>Does not exploit, attack, brute-force, or packet-sniff.</li>
-            <li>Does not scan public targets.</li>
-            <li>Slice 3 still does not run real device or network checks.</li>
+            <li>Does not scan networks or public targets.</li>
+            <li>Does not upload data or call an AI provider.</li>
             <li>Questionnaire answers stay in this browser session and are not uploaded.</li>
             <li>Future network checks will require explicit authorization.</li>
           </ul>
@@ -209,16 +251,28 @@ export default function App() {
             <p className="section-kicker">Choose mode</p>
             <h2 id="mode-heading">Pick what you want to explore</h2>
             <p className="muted">
-              Available options are safe demo and questionnaire flows. Real local checks are still
-              intentionally locked for later slices.
+              Device audits are read-only and platform-specific. Unsupported checks return a calm
+              local report without running commands for the wrong operating system.
             </p>
           </div>
           <div className="mode-grid">
             <ModeCard
-              title="Demo Mode"
+              title="Windows Device Audit"
               status="Available"
-              description="Review static sample findings from Slice 2."
-              onSelect={() => setFlowStep("demo")}
+              description="Run read-only Windows posture checks, or see a safe unsupported-platform result here."
+              onSelect={() => setFlowStep("windows")}
+            />
+            <ModeCard
+              title="macOS Device Audit"
+              status="Available"
+              description="Run read-only macOS posture checks when the backend is running on a Mac."
+              onSelect={() => setFlowStep("macos")}
+            />
+            <ModeCard
+              title="Linux Device Audit"
+              status="Available"
+              description="Run read-only Linux posture checks, or see unsupported status on other platforms."
+              onSelect={() => setFlowStep("linux")}
             />
             <ModeCard
               title="Home Security Questionnaire"
@@ -227,22 +281,10 @@ export default function App() {
               onSelect={openQuestionnaire}
             />
             <ModeCard
-              title="Windows Device Audit"
+              title="Demo Mode"
               status="Available"
-              description="Run read-only Windows posture checks, or see a safe unsupported-platform result here."
-              onSelect={() => setFlowStep("windows")}
-            />
-            <ModeCard
-              title="Device-only Audit"
-              status="Coming soon"
-              description="Future local device checks with clear boundaries and consent."
-              disabled
-            />
-            <ModeCard
-              title="Device + Home Network Audit"
-              status="Coming soon"
-              description="Future authorized home network awareness flow."
-              disabled
+              description="Review static sample findings from Slice 2."
+              onSelect={() => setFlowStep("demo")}
             />
           </div>
         </section>
@@ -326,11 +368,66 @@ export default function App() {
 
       {flowStep === "windows" && (
         <>
-          <WindowsAuditPanel
+          <LocalAuditPanel
+            platformName="Windows"
+            panelKicker="Windows Device Audit"
+            heading="Read-only local Windows checks"
+            description="This mode asks the local backend for Windows posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+            runLabel="Run Windows Local Check"
+            loadingLabel="Running Read-Only Check"
+            findingsHeading="Windows Findings"
+            unsupportedTitle="Windows checks are unavailable here"
+            unsupportedBody="Windows checks can only run when AI HomeGuard is running on a Windows computer. You are seeing a safe unsupported-platform result."
             report={windowsReport.state === "ready" ? windowsReport.report : null}
             loading={windowsReport.state === "loading"}
             error={windowsReport.state === "error" ? windowsReport.message : null}
             onRun={runWindowsLocalCheck}
+          />
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </>
+      )}
+
+      {flowStep === "macos" && (
+        <>
+          <LocalAuditPanel
+            platformName="macOS"
+            panelKicker="macOS Device Audit"
+            heading="Read-only local macOS checks"
+            description="This mode asks the local backend for macOS posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+            runLabel="Run macOS Local Check"
+            loadingLabel="Running Read-Only Check"
+            findingsHeading="macOS Findings"
+            unsupportedTitle="macOS checks are unavailable here"
+            unsupportedBody="macOS checks can only run when AI HomeGuard is running on a Mac. You are seeing a safe unsupported-platform result."
+            report={macosReport.state === "ready" ? macosReport.report : null}
+            loading={macosReport.state === "loading"}
+            error={macosReport.state === "error" ? macosReport.message : null}
+            onRun={runMacOSLocalCheck}
+          />
+          <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
+            Back to Modes
+          </button>
+        </>
+      )}
+
+      {flowStep === "linux" && (
+        <>
+          <LocalAuditPanel
+            platformName="Linux"
+            panelKicker="Linux Device Audit"
+            heading="Read-only local Linux checks"
+            description="This mode asks the local backend for Linux posture findings. No settings are changed, no network scan is run, and no data is uploaded."
+            runLabel="Run Linux Local Check"
+            loadingLabel="Running Read-Only Check"
+            findingsHeading="Linux Findings"
+            unsupportedTitle="Linux checks are unavailable here"
+            unsupportedBody="Linux checks can only run when AI HomeGuard is running on a Linux computer. You are seeing a safe unsupported-platform result."
+            report={linuxReport.state === "ready" ? linuxReport.report : null}
+            loading={linuxReport.state === "loading"}
+            error={linuxReport.state === "error" ? linuxReport.message : null}
+            onRun={runLinuxLocalCheck}
           />
           <button className="secondary-button" type="button" onClick={() => setFlowStep("mode")}>
             Back to Modes
