@@ -19,6 +19,7 @@ function formatStatus(value: string) {
 function sourceLabel(report: HomeGuardReport) {
   const hasQuestionnaire = report.findings.some((finding) => finding.tags.includes("questionnaire"));
   const hasNetwork = report.findings.some((finding) => finding.tags.includes("network-awareness"));
+  const hasInventory = report.findings.some((finding) => finding.tags.includes("device-inventory"));
   const hasLocal = report.runtime_context !== null && report.runtime_context !== undefined;
   const hasLocalFinding = report.findings.some(
     (finding) =>
@@ -32,6 +33,7 @@ function sourceLabel(report: HomeGuardReport) {
     hasQuestionnaire ? "questionnaire" : null,
     hasLocal || hasLocalFinding ? "local device" : null,
     hasNetwork ? "local network awareness" : null,
+    hasInventory ? "device inventory" : null,
   ].filter(Boolean);
   if (sources.length) {
     return sources.join(" + ");

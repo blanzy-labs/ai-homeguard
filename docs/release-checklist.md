@@ -31,7 +31,15 @@
 - Private/public network guardrail validation passes
 - Network awareness route validates passive-only report generation
 - Combined report validates optional authorized network awareness inclusion
+- Device inventory models validate optional IP/MAC fields and mask optional hints
+- Demo device inventory is deterministic, fake, and contains no real IPs, MACs, or hostnames
+- Device inventory analyzer validates unknown-device, smart-device, guest-device, old-device, and update-review findings
+- Device inventory report route validates manual/demo report generation
+- Combined report validates optional device inventory inclusion
+- Router guidance route returns generic vendor-neutral guidance
+- Router guidance includes no default router passwords, exploit instructions, router-login automation, or credential collection
 - No active scan, Nmap, ping sweep, port scan, packet capture, router credential, or public target feature included
+- No automatic device discovery, device fingerprinting, ARP scan, router login, or required hostname/IP/MAC fields included
 - Network privacy validation confirms MAC addresses and hostnames are not exposed by default
 - No report auto-save or backend persistence included
 - Docker limitation note appears when container runtime is detected

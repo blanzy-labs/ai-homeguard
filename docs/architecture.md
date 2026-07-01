@@ -2,7 +2,7 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 9 Components
+## Current Slice 10 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
@@ -13,11 +13,12 @@ AI HomeGuard uses a simple local-first web app structure.
 - Combined report and export layer: report merge service, combined report route, Markdown export, and JSON export
 - Knowledge layer: local D3FEND-informed guidance catalog, enrichment service, and knowledge API routes
 - Network awareness foundation: authorization model, private-network guardrails, passive local context service, network report runner, and safety policy route
-- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
+- Device inventory foundation: manual/demo inventory models, deterministic fake inventory, analyzer, report route, combined integration, and generic router guidance
+- Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, network awareness, device inventory helper, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 9 adds an authorization-gated safe local network awareness foundation. It does not include active network scanning, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
+Slice 10 adds a safe manual/demo device inventory and generic router guidance foundation. It does not include active network scanning, automatic device discovery, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, router credential collection, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
 
 ## Finding and Report Model
 
@@ -68,12 +69,12 @@ Future real checks should use the same finding/report model so questionnaire fin
 ```text
 frontend -> questionnaire answers + optional local audit authorization
 frontend -> POST /reports/combined
-/reports/combined -> questionnaire report builder + optional local_runner + optional network awareness runner
+/reports/combined -> questionnaire report builder + optional local_runner + optional network awareness runner + optional device inventory report
 merge_homeguard_reports -> combined HomeGuardReport
 frontend -> POST /reports/export/markdown or /reports/export/json when user clicks export
 ```
 
-The combined route works in memory only. It does not persist questionnaire answers, local audit results, network awareness results, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement. Network awareness findings are included only when the request includes acknowledged `home_network` or `demo` authorization.
+The combined route works in memory only. It does not persist questionnaire answers, local audit results, network awareness results, device inventory submissions, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement. Network awareness findings are included only when the request includes acknowledged `home_network` or `demo` authorization. Device inventory findings are included only when the request includes manual/demo device inventory data.
 
 The merge service in `backend/app/reports/merge.py` preserves findings, enriches D3FEND-informed guidance, preserves educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
 
@@ -135,6 +136,33 @@ The passive context service may read local route and neighbor-cache information 
 
 In Docker, network context may describe the container network rather than the host or home network. Future active private-network discovery may be considered later with strict guardrails and explicit authorization, but it is not part of Slice 9.
 
+## Device Inventory and Router Guidance Foundation
+
+```text
+frontend -> manual/demo device inventory
+frontend -> GET /router/guidance
+frontend -> POST /reports/device-inventory
+inventory analyzer -> manual/demo findings -> HomeGuardReport
+combined report -> optional device_inventory_submission -> merge
+```
+
+Slice 10 introduces:
+
+- `backend/app/models/device_inventory.py`: device type, trust, update, placement, inventory item, submission, and result models
+- `backend/app/demo/device_inventory.py`: deterministic fake inventory with no real IPs, MACs, or hostnames
+- `backend/app/inventory/analyzer.py`: aggregate manual/demo inventory findings and report builder
+- `backend/app/knowledge/router_guidance.py`: generic vendor-neutral router guidance topics
+- `GET /inventory/demo`: fake demo inventory, result, and report
+- `POST /inventory/analyze`: inventory result without persistence
+- `POST /reports/device-inventory`: inventory `HomeGuardReport`
+- `GET /router/guidance`: generic router guidance
+
+The inventory model does not require hostname, IP address, MAC address, owner name, exact room, serial number, or router credentials. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked. The analyzer uses manual/demo evidence only, keeps confidence calm, avoids high-severity findings from manual inventory alone, and enriches findings through the local D3FEND-informed guidance catalog.
+
+Router guidance is generic and vendor-neutral. It helps users review connected devices, unknown devices, guest Wi-Fi, router firmware, Wi-Fi security, remote administration, and router admin hygiene without providing exploit instructions, default router passwords, router bypass guidance, credential collection, or router login automation.
+
+Future active discovery may be considered only in a later slice with explicit authorization, strict private-network guardrails, and a separate safety review. It is not part of Slice 10.
+
 ## Platform Check Architecture
 
 Platform checks use a guarded command runner and explicit platform detection:
@@ -151,6 +179,9 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/network/guardrails.py`: private/public target classification for future network checks
 - `backend/app/network/context.py`: passive local network context service
 - `backend/app/network/runner.py`: authorization-gated network awareness report runner
+- `backend/app/models/device_inventory.py`: manual/demo device inventory models
+- `backend/app/inventory/analyzer.py`: inventory result/report builder
+- `backend/app/knowledge/router_guidance.py`: generic router guidance topics
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers
@@ -228,6 +259,7 @@ Development currently happens on a Mac Mini. Windows and Linux behavior is valid
 - `knowledge`: D3FEND-informed defensive guidance references and future catalog ingestion experiments
 - `reports`: plain-English local report generation and future report merging
 - `questionnaire`: beginner-friendly user inputs and context
+- `inventory`: manual/demo device inventory and router guidance
 - `platform adapters`: future router and network-aware implementations
 
-Future slices may combine questionnaire and local-device reports or add explicitly authorized network-aware checks. Those checks should stay defensive, local-first, and explicit about user authorization.
+Future slices may add explicitly authorized network-aware checks or richer router guidance. Those checks should stay defensive, local-first, and explicit about user authorization.

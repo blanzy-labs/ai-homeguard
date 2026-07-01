@@ -8,6 +8,16 @@ from app.models.enums import (
     ReportMode,
     Severity,
 )
+from app.models.device_inventory import (
+    DeviceInventoryItem,
+    DeviceInventoryMode,
+    DeviceInventoryResult,
+    DeviceInventorySubmission,
+    DeviceNetworkPlacement,
+    DeviceTrustLevel,
+    DeviceType,
+    DeviceUpdateStatus,
+)
 from app.models.evidence import Evidence
 from app.models.finding import Finding
 from app.models.guidance import AttackContext, D3FENDGuidance
@@ -38,6 +48,14 @@ __all__ = [
     "Confidence",
     "D3FENDGuidance",
     "D3FENDGuidanceCategory",
+    "DeviceInventoryItem",
+    "DeviceInventoryMode",
+    "DeviceInventoryResult",
+    "DeviceInventorySubmission",
+    "DeviceNetworkPlacement",
+    "DeviceTrustLevel",
+    "DeviceType",
+    "DeviceUpdateStatus",
     "Difficulty",
     "Evidence",
     "Finding",

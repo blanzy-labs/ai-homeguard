@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 9 includes:
+Slice 10 includes:
 
 - No telemetry
 - No database
@@ -19,12 +19,15 @@ Slice 9 includes:
 - User-triggered Markdown and JSON exports
 - Local static D3FEND-informed guidance catalog and enrichment service
 - Authorization-gated passive local network awareness
+- Manual/demo device inventory helper
+- Generic vendor-neutral router guidance
 - Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
 - No ClamAV file scans
-- No real router or network checks
-- No active network scanning, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, or public target scanning
+- No automatic device discovery
+- No real router login or router credential collection
+- No active network scanning, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, credential testing, or public target scanning
 - Static fake demo data only
 - Questionnaire answers kept in browser memory and submitted only to the local backend
 - No questionnaire answer persistence
@@ -40,13 +43,17 @@ The questionnaire avoids passwords, credentials, addresses, usernames, email add
 
 The questionnaire endpoints do not upload data to an external service and do not write answers to disk. The returned report is generated in memory from the submitted answers.
 
-Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement.
+Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement. If device inventory findings are requested, the request must include manual/demo inventory data.
 
 Markdown and JSON exports are user-triggered. The backend returns export content to the browser or caller; it does not save a copy. Exported reports may contain user-provided questionnaire answers and local audit evidence, so users should review exports before sharing them.
 
 The D3FEND-informed guidance catalog is local and static. AI HomeGuard does not fetch live MITRE data, call an AI provider, send telemetry, persist catalog lookups, or change settings while enriching guidance. Guidance is educational and may be incomplete.
 
 Network awareness authorization is request-level only and is not stored. Slice 9 uses passive local context only. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
+
+Device inventory is manual/demo only in Slice 10. AI HomeGuard does not discover devices automatically, scan the network, send packets, fingerprint devices, log in to routers, request router credentials, capture packets, or upload inventory data. Hostnames, IP addresses, MAC addresses, personal names, exact room locations, and serial numbers are not required. Optional MAC hints are masked before user-facing output, and optional IP hints are privacy-masked.
+
+Router guidance is local, generic, and vendor-neutral. It does not provide exploit instructions, default router passwords, router bypass guidance, or router-login automation. Users should use their router app/admin page as the source of truth and should not enter router passwords into AI HomeGuard.
 
 Windows local checks are designed to be read-only. They do not enable or disable Defender, Firewall, BitLocker, Remote Desktop, SMB, services, or Windows Update. They do not attempt remediation and do not require administrator privileges for baseline behavior.
 

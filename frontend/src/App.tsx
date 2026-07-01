@@ -3,6 +3,8 @@ import {
   exportJsonReport,
   exportMarkdownReport,
   getDemoReport,
+  getDemoDeviceInventory,
+  getDeviceInventoryReport,
   getCombinedReport,
   getD3FENDGuidanceCatalog,
   getLocalDeviceReport,
@@ -11,17 +13,21 @@ import {
   getNetworkAwarenessReport,
   getQuestionnaire,
   getQuestionnaireReport,
+  getRouterGuidance,
   getRuntimeContext,
   getWindowsLocalReport,
+  type DeviceInventorySubmission,
   type HomeGuardReport,
   type CombinedReportResponse,
   type D3FENDCatalogResponse,
   type QuestionnaireSection,
   type QuestionnaireSubmission,
+  type RouterGuidanceResponse,
   type RuntimeContext,
 } from "./api/client";
 import { CombinedReportPanel } from "./components/CombinedReportPanel";
 import { DemoDashboard } from "./components/DemoDashboard";
+import { DeviceInventoryPanel } from "./components/DeviceInventoryPanel";
 import { GuidanceCatalogPanel } from "./components/GuidanceCatalogPanel";
 import { LocalAuditPanel } from "./components/LocalAuditPanel";
 import { ModeCard } from "./components/ModeCard";
@@ -41,6 +47,7 @@ type FlowStep =
   | "combined-results"
   | "guidance"
   | "network"
+  | "inventory"
   | "demo"
   | "local"
   | "windows"
@@ -77,8 +84,23 @@ type GuidanceCatalogState =
   | { state: "ready"; catalog: D3FENDCatalogResponse }
   | { state: "error"; message: string };
 
+type RouterGuidanceState =
+  | { state: "idle" }
+  | { state: "loading" }
+  | { state: "ready"; guidance: RouterGuidanceResponse }
+  | { state: "error"; message: string };
+
 const dockerRuntimeNote =
   "If running in Docker, results may reflect the container rather than the host computer.";
+
+function createEmptyDeviceInventorySubmission(): DeviceInventorySubmission {
+  return {
+    mode: "manual",
+    acknowledged_manual: true,
+    devices: [],
+    user_notes: "",
+  };
+}
 
 export default function App() {
   const [flowStep, setFlowStep] = useState<FlowStep>("welcome");
@@ -94,10 +116,16 @@ export default function App() {
   const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
   const [includeNetworkInCombined, setIncludeNetworkInCombined] = useState(false);
   const [combinedNetworkAcknowledged, setCombinedNetworkAcknowledged] = useState(false);
+  const [includeDeviceInventoryInCombined, setIncludeDeviceInventoryInCombined] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [guidanceCatalog, setGuidanceCatalog] = useState<GuidanceCatalogState>({ state: "idle" });
   const [networkReport, setNetworkReport] = useState<ReportState>({ state: "idle" });
   const [networkAcknowledged, setNetworkAcknowledged] = useState(false);
+  const [deviceInventorySubmission, setDeviceInventorySubmission] = useState<DeviceInventorySubmission>(
+    createEmptyDeviceInventorySubmission,
+  );
+  const [deviceInventoryReport, setDeviceInventoryReport] = useState<ReportState>({ state: "idle" });
+  const [routerGuidance, setRouterGuidance] = useState<RouterGuidanceState>({ state: "idle" });
   const [localReport, setLocalReport] = useState<ReportState>({ state: "idle" });
   const [runtimeContext, setRuntimeContext] = useState<RuntimeState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
@@ -211,6 +239,23 @@ export default function App() {
     setFlowStep("network");
   }
 
+  async function openDeviceInventory() {
+    setFlowStep("inventory");
+    if (routerGuidance.state === "ready" || routerGuidance.state === "loading") {
+      return;
+    }
+    setRouterGuidance({ state: "loading" });
+    try {
+      const guidance = await getRouterGuidance();
+      setRouterGuidance({ state: "ready", guidance });
+    } catch (error) {
+      setRouterGuidance({
+        state: "error",
+        message: error instanceof Error ? error.message : "Router guidance unavailable",
+      });
+    }
+  }
+
   async function submitQuestionnaire(submission: QuestionnaireSubmission) {
     setIsSubmittingQuestionnaire(true);
     setQuestionnaireReport({ state: "loading" });
@@ -253,6 +298,13 @@ export default function App() {
       });
       return;
     }
+    if (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0) {
+      setCombinedReport({
+        state: "error",
+        message: "Add manual devices or load demo inventory before including Device Inventory Helper findings.",
+      });
+      return;
+    }
     setCombinedReport({ state: "loading" });
     setExportStatus(null);
     setFlowStep("combined-results");
@@ -261,6 +313,7 @@ export default function App() {
         include_questionnaire: true,
         include_local_device: includeLocalInCombined,
         include_network_awareness: includeNetworkInCombined,
+        include_device_inventory: includeDeviceInventoryInCombined,
         questionnaire_submission: combinedSubmission,
         acknowledged_authorization: includeLocalInCombined ? combinedLocalAcknowledged : false,
         network_authorization: includeNetworkInCombined
@@ -270,6 +323,7 @@ export default function App() {
               statement_version: "v0.1.0-slice-9",
             }
           : null,
+        device_inventory_submission: includeDeviceInventoryInCombined ? deviceInventorySubmission : null,
       });
       setCombinedReport({ state: "ready", response });
     } catch (error) {
@@ -329,6 +383,43 @@ export default function App() {
       setNetworkReport({
         state: "error",
         message: error instanceof Error ? error.message : "Network awareness report unavailable",
+      });
+    }
+  }
+
+  async function loadDemoDeviceInventory() {
+    setDeviceInventoryReport({ state: "loading" });
+    try {
+      const demo = await getDemoDeviceInventory();
+      setDeviceInventorySubmission(demo.submission);
+      setDeviceInventoryReport({ state: "ready", report: demo.report });
+    } catch (error) {
+      setDeviceInventoryReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Demo device inventory unavailable",
+      });
+    }
+  }
+
+  async function runDeviceInventoryReport() {
+    if (deviceInventorySubmission.devices.length === 0) {
+      setDeviceInventoryReport({
+        state: "error",
+        message: "Add a manual device or load demo inventory before building the report.",
+      });
+      return;
+    }
+    setDeviceInventoryReport({ state: "loading" });
+    try {
+      const report = await getDeviceInventoryReport({
+        ...deviceInventorySubmission,
+        acknowledged_manual: true,
+      });
+      setDeviceInventoryReport({ state: "ready", report });
+    } catch (error) {
+      setDeviceInventoryReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Device inventory report unavailable",
       });
     }
   }
@@ -403,8 +494,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 9 adds authorization-first passive local
-          network awareness without active discovery or port scanning.
+          A defensive home cyber hygiene helper. Slice 10 adds manual/demo device inventory and
+          router guidance without active discovery, scanning, or router login.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -453,6 +544,8 @@ export default function App() {
             <li>Does not scan networks or public targets.</li>
             <li>Network awareness uses passive local context only after explicit authorization.</li>
             <li>Network awareness does not run active discovery, port scans, or packet capture.</li>
+            <li>Device inventory is manual/demo only and does not discover devices automatically.</li>
+            <li>Device inventory does not ask for router credentials, IP addresses, MAC addresses, or hostnames.</li>
             <li>Does not upload data or call an AI provider.</li>
             <li>Does not save reports automatically.</li>
             <li>Exports are created only when you click an export button.</li>
@@ -516,6 +609,12 @@ export default function App() {
               status="Available"
               description="Review passive local network context and safety guidance. No active discovery or port scanning is run."
               onSelect={openNetworkAwareness}
+            />
+            <ModeCard
+              title="Device Inventory Helper"
+              status="Available"
+              description="Manually review devices from your router app/device list. AI HomeGuard does not scan or log into your router."
+              onSelect={openDeviceInventory}
             />
             <ModeCard
               title="Windows Device Audit"
@@ -592,6 +691,22 @@ export default function App() {
         />
       )}
 
+      {flowStep === "inventory" && (
+        <DeviceInventoryPanel
+          submission={deviceInventorySubmission}
+          routerGuidance={routerGuidance.state === "ready" ? routerGuidance.guidance : null}
+          guidanceLoading={routerGuidance.state === "loading"}
+          guidanceError={routerGuidance.state === "error" ? routerGuidance.message : null}
+          report={deviceInventoryReport.state === "ready" ? deviceInventoryReport.report : null}
+          loading={deviceInventoryReport.state === "loading"}
+          error={deviceInventoryReport.state === "error" ? deviceInventoryReport.message : null}
+          onSubmissionChange={setDeviceInventorySubmission}
+          onLoadDemo={loadDemoDeviceInventory}
+          onRun={runDeviceInventoryReport}
+          onBackToModes={() => setFlowStep("mode")}
+        />
+      )}
+
       {flowStep === "questionnaire" && questionnaire.state === "loading" && (
         <section className="loading-panel">
           <p className="section-kicker">Questionnaire</p>
@@ -659,8 +774,9 @@ export default function App() {
             <h2 id="full-options-heading">Choose report sources</h2>
             <p className="muted">
               The questionnaire is included. You can also add read-only local device checks and
-              passive local network awareness. No active scan is run, no ports are scanned, no
-              settings are changed, and no data is uploaded.
+              passive local network awareness, plus manual/demo device inventory findings. No
+              active scan is run, no ports are scanned, no router login is performed, no settings
+              are changed, and no data is uploaded.
             </p>
           </div>
 
@@ -721,6 +837,18 @@ export default function App() {
             </label>
           ) : null}
 
+          <label className="acknowledgement">
+            <input
+              type="checkbox"
+              checked={includeDeviceInventoryInCombined}
+              onChange={(event) => setIncludeDeviceInventoryInCombined(event.target.checked)}
+            />
+            <span>
+              Include Device Inventory Helper findings from the current manual/demo inventory. Add
+              devices or load demo inventory in the helper before building the combined report.
+            </span>
+          </label>
+
           <div className="flow-actions">
             <button className="secondary-button" type="button" onClick={() => setFlowStep("full-questionnaire")}>
               Back
@@ -730,7 +858,8 @@ export default function App() {
               type="button"
               disabled={
                 (includeLocalInCombined && !combinedLocalAcknowledged) ||
-                (includeNetworkInCombined && !combinedNetworkAcknowledged)
+                (includeNetworkInCombined && !combinedNetworkAcknowledged) ||
+                (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0)
               }
               onClick={buildCombinedReport}
             >

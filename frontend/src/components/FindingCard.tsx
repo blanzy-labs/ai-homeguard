@@ -20,6 +20,9 @@ function formatValue(value: string) {
 }
 
 function sourceLabel(finding: Finding) {
+  if (finding.tags.includes("device-inventory")) {
+    return "Device Inventory Helper";
+  }
   if (finding.tags.includes("network-awareness")) {
     return "Local Network Awareness";
   }

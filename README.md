@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 9 - Safe Local Network Awareness Foundation.
+Current slice: Slice 10 - Safe Device Inventory Demo and Router Guidance.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, a manual/demo device inventory helper with generic router guidance, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,14 +16,17 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 9 does not include:
+Slice 10 does not include:
 
 - Active network scanning
 - Nmap integration
 - Ping sweeps
 - Port scanning
+- Device fingerprinting
 - Packet capture
 - Router login or credential testing
+- Router credential fields
+- Automatic device discovery
 - Public target scanning
 - OpenAI or other AI provider calls
 - Live MITRE/D3FEND data fetching at runtime
@@ -41,6 +44,8 @@ The unified local device audit auto-detects the runtime platform and calls the m
 The combined report can merge questionnaire-derived findings with optional read-only local device audit findings. Exports are user-triggered only and are not saved automatically or uploaded.
 
 Local Network Awareness is authorization-gated and passive only. It may summarize local runtime/router context and passive cache counts, but it does not run active discovery, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, or public target scanning. Authorization is request-level only and is not stored.
+
+Device Inventory Helper is manual/demo only. It helps users compare devices from their router app/admin page with a simple privacy-safe inventory. It does not discover devices automatically, scan the network, log in to routers, ask for router credentials, require IP addresses, require MAC addresses, require hostnames, upload data, persist inventory, or save reports automatically. Optional MAC/IP hints are masked by the backend if provided.
 
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance comes from a small local curated educational catalog and explicit finding guidance. It is not official D3FEND coverage, certification, or a guarantee of security. Optional ATT&CK context is educational only.
 
@@ -155,6 +160,8 @@ Combined reports can include:
 
 - Questionnaire-derived findings
 - Optional local device audit findings after authorization acknowledgement
+- Optional passive local network awareness findings after authorization acknowledgement
+- Optional manual/demo device inventory findings
 - Existing safety notes, runtime context, D3FEND-informed guidance, and top actions
 
 Exports:
@@ -218,6 +225,45 @@ Network awareness boundaries:
 - No persistence or upload
 - Full MAC addresses and hostnames are not shown by default
 
+## Device Inventory and Router Guidance APIs
+
+Demo/manual inventory:
+
+```bash
+curl http://localhost:8000/inventory/demo
+curl http://localhost:8000/router/guidance
+```
+
+Device inventory report:
+
+```bash
+curl -X POST http://localhost:8000/reports/device-inventory \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"manual","acknowledged_manual":true,"devices":[]}'
+```
+
+Routes:
+
+- `GET /inventory/demo`
+- `POST /inventory/analyze`
+- `POST /reports/device-inventory`
+- `GET /router/guidance`
+
+Combined reports can include manual/demo inventory by setting `include_device_inventory: true` and passing `device_inventory_submission`.
+
+Device inventory boundaries:
+
+- Manual/demo data only
+- No active discovery
+- No scan buttons or scan endpoints
+- No Nmap, ping, ARP scan, port scan, or packet capture
+- No router login
+- No router credentials requested
+- No public target scanning
+- No persistence, upload, telemetry, database, or AI provider call
+- No IP, MAC, hostname, personal name, exact room, or serial number required
+- Full MAC addresses are masked if optional hints are provided
+
 ## Local Install
 
 Prerequisites:
@@ -270,6 +316,8 @@ Expected URLs:
 - Runtime context: http://localhost:8000/runtime
 - Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
 - Network safety policy: http://localhost:8000/network/safety-policy
+- Device inventory demo: http://localhost:8000/inventory/demo
+- Router guidance: http://localhost:8000/router/guidance
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
@@ -302,6 +350,8 @@ curl http://localhost:8000/demo/report
 curl http://localhost:8000/runtime
 curl http://localhost:8000/knowledge/d3fend-guidance
 curl http://localhost:8000/network/safety-policy
+curl http://localhost:8000/inventory/demo
+curl http://localhost:8000/router/guidance
 curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/reports/windows-local
 curl http://localhost:8000/reports/macos-local
@@ -328,6 +378,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Slice 7 Validation](docs/validation/slice-7-validation.md)
 - [Slice 8 Validation](docs/validation/slice-8-validation.md)
 - [Slice 9 Validation](docs/validation/slice-9-validation.md)
+- [Slice 10 Validation](docs/validation/slice-10-validation.md)
 
 ## License
 

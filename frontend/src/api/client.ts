@@ -93,7 +93,7 @@ export type HomeGuardReport = {
   app: string;
   version: string;
   generated_at: string;
-  mode: "demo" | "local" | "combined" | "network_awareness";
+  mode: "demo" | "local" | "combined" | "network_awareness" | "device_inventory";
   platform_scope: string[];
   summary: ReportSummary;
   findings: Finding[];
@@ -157,9 +157,11 @@ export type CombinedReportRequest = {
   include_local_device?: boolean;
   include_questionnaire?: boolean;
   include_network_awareness?: boolean;
+  include_device_inventory?: boolean;
   questionnaire_submission?: QuestionnaireSubmission | null;
   acknowledged_authorization?: boolean;
   network_authorization?: NetworkAuthorization | null;
+  device_inventory_submission?: DeviceInventorySubmission | null;
   export_format?: "none" | "markdown" | "json";
 };
 
@@ -212,6 +214,93 @@ export type NetworkSafetyPolicy = {
   statement_version: string;
 };
 
+export type DeviceType =
+  | "computer"
+  | "phone"
+  | "tablet"
+  | "router"
+  | "printer"
+  | "smart_tv"
+  | "camera"
+  | "doorbell"
+  | "speaker"
+  | "game_console"
+  | "nas_storage"
+  | "iot_device"
+  | "guest_device"
+  | "unknown"
+  | "other";
+
+export type DeviceTrustLevel = "trusted" | "limited_trust" | "guest" | "unknown";
+
+export type DeviceUpdateStatus =
+  | "up_to_date"
+  | "needs_review"
+  | "unsupported_or_old"
+  | "unknown"
+  | "not_applicable";
+
+export type DeviceNetworkPlacement =
+  | "main_network"
+  | "guest_network"
+  | "isolated_network"
+  | "wired"
+  | "unknown";
+
+export type DeviceInventoryItem = {
+  id: string;
+  label: string;
+  device_type: DeviceType;
+  recognized: boolean;
+  trust_level: DeviceTrustLevel;
+  network_placement: DeviceNetworkPlacement;
+  update_status: DeviceUpdateStatus;
+  used_by?: string | null;
+  notes?: string | null;
+  ip_hint?: string | null;
+  mac_hint?: string | null;
+  last_seen_hint?: string | null;
+  sensitive: boolean;
+};
+
+export type DeviceInventorySubmission = {
+  mode: "demo" | "manual";
+  devices: DeviceInventoryItem[];
+  user_notes?: string | null;
+  acknowledged_manual?: boolean;
+};
+
+export type DeviceInventoryResult = {
+  device_count: number;
+  recognized_count: number;
+  unknown_count: number;
+  sensitive_count: number;
+  iot_count: number;
+  guest_or_limited_trust_count: number;
+  findings: Finding[];
+  top_actions: string[];
+  limitations: string[];
+};
+
+export type DeviceInventoryDemoResponse = {
+  submission: DeviceInventorySubmission;
+  result: DeviceInventoryResult;
+  report: HomeGuardReport;
+};
+
+export type RouterGuidanceTopic = {
+  id: string;
+  title: string;
+  summary: string;
+  steps: string[];
+};
+
+export type RouterGuidanceResponse = {
+  source_note: string;
+  safety_notes: string[];
+  topics: RouterGuidanceTopic[];
+};
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -244,6 +333,14 @@ export async function getD3FENDGuidanceCatalog(): Promise<D3FENDCatalogResponse>
 
 export async function getNetworkSafetyPolicy(): Promise<NetworkSafetyPolicy> {
   return getJson<NetworkSafetyPolicy>("/network/safety-policy");
+}
+
+export async function getDemoDeviceInventory(): Promise<DeviceInventoryDemoResponse> {
+  return getJson<DeviceInventoryDemoResponse>("/inventory/demo");
+}
+
+export async function getRouterGuidance(): Promise<RouterGuidanceResponse> {
+  return getJson<RouterGuidanceResponse>("/router/guidance");
 }
 
 export async function evaluateQuestionnaire(
@@ -301,6 +398,27 @@ export async function getNetworkAwarenessReport(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(authorization),
+  });
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      message = payload.detail ?? message;
+    } catch {
+      message = await response.text();
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<HomeGuardReport>;
+}
+
+export async function getDeviceInventoryReport(
+  submission: DeviceInventorySubmission,
+): Promise<HomeGuardReport> {
+  const response = await fetch(`${apiBaseUrl}/reports/device-inventory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submission),
   });
   if (!response.ok) {
     let message = `Request failed: ${response.status}`;

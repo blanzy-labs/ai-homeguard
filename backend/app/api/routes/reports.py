@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Response
 
 from app.checks.local_runner import run_local_device_audit
 from app.demo.demo_report import get_demo_report
+from app.inventory.analyzer import build_device_inventory_report
+from app.models.device_inventory import DeviceInventorySubmission
 from app.models.questionnaire import QuestionnaireSubmission
 from app.models.report import HomeGuardReport
 from app.models.report_request import CombinedReportRequest, CombinedReportResponse, ExportFormat
@@ -24,6 +26,11 @@ def read_questionnaire_report(submission: QuestionnaireSubmission) -> HomeGuardR
     return build_questionnaire_report(submission)
 
 
+@router.post("/device-inventory", response_model=HomeGuardReport)
+def read_device_inventory_report(submission: DeviceInventorySubmission) -> HomeGuardReport:
+    return build_device_inventory_report(submission)
+
+
 @router.post("/combined", response_model=CombinedReportResponse)
 def read_combined_report(request: CombinedReportRequest) -> CombinedReportResponse:
     if request.include_local_device and not request.acknowledged_authorization:
@@ -43,7 +50,17 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
             status_code=400,
             detail="Questionnaire submission is required when include_questionnaire is true.",
         )
-    if not request.include_questionnaire and not request.include_local_device and not request.include_network_awareness:
+    if request.include_device_inventory and request.device_inventory_submission is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Device inventory submission is required when include_device_inventory is true.",
+        )
+    if (
+        not request.include_questionnaire
+        and not request.include_local_device
+        and not request.include_network_awareness
+        and not request.include_device_inventory
+    ):
         raise HTTPException(status_code=400, detail="Select at least one report source.")
 
     reports: list[HomeGuardReport] = []
@@ -67,6 +84,10 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
             raise HTTPException(status_code=400, detail=detail) from error
         reports.append(network_report)
         limitations.append("Network awareness is passive only; no active discovery or port scanning was run.")
+    if request.include_device_inventory and request.device_inventory_submission is not None:
+        reports.append(build_device_inventory_report(request.device_inventory_submission))
+        limitations.append("Device inventory findings are based on manual/demo device information.")
+        limitations.append("No automatic device discovery, network scan, router login, or router credential collection was used.")
 
     combined = merge_homeguard_reports(reports, mode="combined")
     combined.safety_notes = _combined_safety_notes(combined.safety_notes)

@@ -61,6 +61,9 @@ Expected URLs:
 - Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
 - Network safety policy: http://localhost:8000/network/safety-policy
 - Network awareness report: http://localhost:8000/reports/network-awareness
+- Device inventory demo: http://localhost:8000/inventory/demo
+- Device inventory report: http://localhost:8000/reports/device-inventory
+- Router guidance: http://localhost:8000/router/guidance
 - Local device report: http://localhost:8000/reports/local-device
 - Combined report: http://localhost:8000/reports/combined
 - Markdown export: http://localhost:8000/reports/export/markdown

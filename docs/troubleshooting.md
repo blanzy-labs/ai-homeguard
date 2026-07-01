@@ -97,6 +97,10 @@ Manual routes return unsupported-platform reports when called from the wrong run
 
 If `/reports/combined` returns an authorization error, the request asked to include local device audit findings without setting `acknowledged_authorization` to `true`. Local checks are read-only, but AI HomeGuard still requires explicit acknowledgement before adding them to a combined report.
 
+## Combined Report Device Inventory Error
+
+If `/reports/combined` says a device inventory submission is required, the request set `include_device_inventory` to true without sending `device_inventory_submission`. In the frontend, add at least one manual device or load the fake demo inventory before including Device Inventory Helper findings.
+
 ## Questionnaire Required for Combined Report
 
 If `include_questionnaire` is true, `/reports/combined` requires a questionnaire submission. Submit questionnaire answers first, or set `include_questionnaire` to false when only local device findings are wanted.
@@ -135,9 +139,49 @@ If `/knowledge/d3fend-guidance/{guidance_id}` returns 404, confirm the ID is one
 
 When the backend runs in Docker, passive network context may describe the container network rather than the host or home network. Run the backend natively for host-level local network context.
 
-## No Devices Are Shown
+## Network Awareness Shows No Passive Device Entries
 
 Slice 9 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list.
+
+## Device Inventory Helper Has No Devices
+
+Slice 10 device inventory is manual/demo only. Add devices from your router app/device list or click the demo inventory button. AI HomeGuard does not automatically discover devices, scan the network, or log in to your router.
+
+## Optional Device Hints Look Masked
+
+Optional IP and MAC hints are privacy-masked by the backend. This is expected. Exact IP addresses, full MAC addresses, hostnames, serial numbers, exact room locations, and personal names are not required for the inventory helper.
+
+## Router Guidance Does Not Match My Router Menu
+
+Router menus vary by manufacturer and ISP. AI HomeGuard provides generic guidance only and does not provide default router passwords, router-login automation, or bypass instructions. Use your router app or router/ISP documentation as the source of truth.
+
+## Router App Does Not Show Device Names
+
+Some routers show generic labels, manufacturer names, randomized identifiers, or blank names. This is normal. Use calm labels in AI HomeGuard, such as family phone, smart TV, printer, guest device, or unknown device.
+
+## Unknown Devices May Be Normal
+
+An unknown router entry is a review item, not proof of compromise. It may be a phone with MAC randomization, a powered-off device with an old lease, a smart-home device, a guest device, or a renamed device. Identify it before blocking or removing it.
+
+## Duplicate or Old Router Device Entries
+
+Routers may keep old device entries after a device leaves the network. Compare last-seen information in the router app if available. AI HomeGuard does not treat duplicate or stale entries as evidence of compromise by itself.
+
+## Phone MAC Randomization Creates New Entries
+
+Modern phones and tablets may use private or randomized Wi-Fi addresses. This can make the same device appear as a new router entry. Check the device Wi-Fi settings and router app before deciding a device is unknown.
+
+## Guest Wi-Fi Is Not Available
+
+Some routers or ISP-managed gateways do not support guest Wi-Fi or isolation. If guest Wi-Fi is unavailable, keep device firmware updated, use strong Wi-Fi passwords, and review unknown devices regularly.
+
+## Device Inventory Is Not Saved After Refresh
+
+Slice 10 does not persist manual inventory data. If you refresh the browser, restart the frontend, or close the session, re-enter the inventory or load the fake demo inventory again.
+
+## Review Exports Before Sharing
+
+Markdown and JSON exports are user-triggered and may include questionnaire answers or manual inventory labels. Review exported reports before sharing them outside your household.
 
 ## Platform Network Command Is Unavailable
 
