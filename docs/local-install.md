@@ -59,6 +59,8 @@ Expected URLs:
 - Version: http://localhost:8000/version
 - Runtime context: http://localhost:8000/runtime
 - Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
+- Network safety policy: http://localhost:8000/network/safety-policy
+- Network awareness report: http://localhost:8000/reports/network-awareness
 - Local device report: http://localhost:8000/reports/local-device
 - Combined report: http://localhost:8000/reports/combined
 - Markdown export: http://localhost:8000/reports/export/markdown

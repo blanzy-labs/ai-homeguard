@@ -11,6 +11,15 @@ from app.models.enums import (
 from app.models.evidence import Evidence
 from app.models.finding import Finding
 from app.models.guidance import AttackContext, D3FENDGuidance
+from app.models.network import (
+    NetworkAuthorization,
+    NetworkAuthorizationScope,
+    NetworkAwarenessReport,
+    NetworkContext,
+    NetworkScope,
+    NetworkScopeType,
+    NetworkScopeValidation,
+)
 from app.models.questionnaire import (
     QuestionnaireAnswer,
     QuestionnaireAnswerType,
@@ -34,6 +43,13 @@ __all__ = [
     "Finding",
     "FindingStatus",
     "HomeGuardReport",
+    "NetworkAuthorization",
+    "NetworkAuthorizationScope",
+    "NetworkAwarenessReport",
+    "NetworkContext",
+    "NetworkScope",
+    "NetworkScopeType",
+    "NetworkScopeValidation",
     "Platform",
     "QuestionnaireAnswer",
     "QuestionnaireAnswerType",

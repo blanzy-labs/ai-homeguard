@@ -6,9 +6,9 @@ Repository: https://github.com/blanzy-labs/ai-homeguard
 
 ## Status
 
-Current slice: Slice 8 - D3FEND Knowledge Layer and Defensive Guidance Refinement.
+Current slice: Slice 9 - Safe Local Network Awareness Foundation.
 
-This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, Docker Compose wiring, and project documentation.
+This baseline includes the repository scaffold, FastAPI health/version endpoints, Pydantic finding/report models, static deterministic demo data, a safety-first React flow, local questionnaire foundation, questionnaire-derived findings, read-only Windows, macOS, and Linux local check foundations, a unified auto-detected local device audit, combined HomeGuard reports, user-triggered Markdown/JSON exports, a local D3FEND-informed defensive guidance catalog, a safe local network awareness foundation, Docker Compose wiring, and project documentation.
 
 The v0.1.0 target is the Local Home Security Audit MVP.
 
@@ -16,10 +16,15 @@ The v0.1.0 target is the Local Home Security Audit MVP.
 
 AI HomeGuard is a local-first defensive cyber hygiene tool. It does not exploit, attack, brute-force, packet-sniff, or scan public targets.
 
-Slice 8 does not include:
+Slice 9 does not include:
 
-- Network scanning
+- Active network scanning
 - Nmap integration
+- Ping sweeps
+- Port scanning
+- Packet capture
+- Router login or credential testing
+- Public target scanning
 - OpenAI or other AI provider calls
 - Live MITRE/D3FEND data fetching at runtime
 - Telemetry, login, cloud storage, or database persistence
@@ -34,6 +39,8 @@ Windows, macOS, and Linux checks are read-only and only execute when AI HomeGuar
 The unified local device audit auto-detects the runtime platform and calls the matching Windows, macOS, or Linux runner. If the backend is running inside Docker, results may reflect the container environment rather than the host computer.
 
 The combined report can merge questionnaire-derived findings with optional read-only local device audit findings. Exports are user-triggered only and are not saved automatically or uploaded.
+
+Local Network Awareness is authorization-gated and passive only. It may summarize local runtime/router context and passive cache counts, but it does not run active discovery, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, or public target scanning. Authorization is request-level only and is not stored.
 
 The demo dashboard uses fake sample findings only. D3FEND-informed guidance comes from a small local curated educational catalog and explicit finding guidance. It is not official D3FEND coverage, certification, or a guarantee of security. Optional ATT&CK context is educational only.
 
@@ -174,6 +181,43 @@ Routes:
 
 The catalog is bundled with the app and is used to enrich demo, questionnaire, local device, combined, Markdown, and JSON reports. It does not fetch live MITRE data, call an AI provider, upload data, persist reports, or claim complete D3FEND coverage.
 
+## Local Network Awareness APIs
+
+Safety policy:
+
+```bash
+curl http://localhost:8000/network/safety-policy
+```
+
+Network awareness report:
+
+```bash
+curl -X POST http://localhost:8000/reports/network-awareness \
+  -H "Content-Type: application/json" \
+  -d '{"acknowledged":true,"scope":"home_network","statement_version":"v0.1.0-slice-9"}'
+```
+
+Routes:
+
+- `GET /network/safety-policy`
+- `POST /reports/network-awareness`
+
+Combined reports can also include network awareness by setting `include_network_awareness: true` and passing `network_authorization` with acknowledged `home_network` or `demo` scope.
+
+Network awareness boundaries:
+
+- Authorization required
+- Passive/local context only
+- No active discovery
+- No Nmap
+- No ping sweeps
+- No port scanning
+- No public target scanning
+- No router login
+- No packet capture
+- No persistence or upload
+- Full MAC addresses and hostnames are not shown by default
+
 ## Local Install
 
 Prerequisites:
@@ -225,6 +269,7 @@ Expected URLs:
 - Local device report: http://localhost:8000/reports/local-device
 - Runtime context: http://localhost:8000/runtime
 - Guidance catalog: http://localhost:8000/knowledge/d3fend-guidance
+- Network safety policy: http://localhost:8000/network/safety-policy
 - Windows local report: http://localhost:8000/reports/windows-local
 - macOS local report: http://localhost:8000/reports/macos-local
 - Linux local report: http://localhost:8000/reports/linux-local
@@ -256,6 +301,7 @@ curl http://localhost:8000/questionnaire
 curl http://localhost:8000/demo/report
 curl http://localhost:8000/runtime
 curl http://localhost:8000/knowledge/d3fend-guidance
+curl http://localhost:8000/network/safety-policy
 curl http://localhost:8000/reports/local-device
 curl http://localhost:8000/reports/windows-local
 curl http://localhost:8000/reports/macos-local
@@ -281,6 +327,7 @@ Docker note: the backend runs inside a Linux container. In Docker, `/reports/loc
 - [Slice 6 Validation](docs/validation/slice-6-validation.md)
 - [Slice 7 Validation](docs/validation/slice-7-validation.md)
 - [Slice 8 Validation](docs/validation/slice-8-validation.md)
+- [Slice 9 Validation](docs/validation/slice-9-validation.md)
 
 ## License
 

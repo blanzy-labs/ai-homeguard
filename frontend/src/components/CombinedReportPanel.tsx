@@ -18,6 +18,7 @@ function formatStatus(value: string) {
 
 function sourceLabel(report: HomeGuardReport) {
   const hasQuestionnaire = report.findings.some((finding) => finding.tags.includes("questionnaire"));
+  const hasNetwork = report.findings.some((finding) => finding.tags.includes("network-awareness"));
   const hasLocal = report.runtime_context !== null && report.runtime_context !== undefined;
   const hasLocalFinding = report.findings.some(
     (finding) =>
@@ -27,13 +28,15 @@ function sourceLabel(report: HomeGuardReport) {
         return source.includes("local check") || source.includes("platform guard") || source.includes("runtime context");
       }),
   );
-  if (hasQuestionnaire && (hasLocal || hasLocalFinding)) {
-    return "questionnaire + local device";
+  const sources = [
+    hasQuestionnaire ? "questionnaire" : null,
+    hasLocal || hasLocalFinding ? "local device" : null,
+    hasNetwork ? "local network awareness" : null,
+  ].filter(Boolean);
+  if (sources.length) {
+    return sources.join(" + ");
   }
-  if (hasLocal || hasLocalFinding) {
-    return "local device";
-  }
-  return "questionnaire";
+  return "selected sources";
 }
 
 export function CombinedReportPanel({

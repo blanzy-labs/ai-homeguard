@@ -20,6 +20,9 @@ function formatValue(value: string) {
 }
 
 function sourceLabel(finding: Finding) {
+  if (finding.tags.includes("network-awareness")) {
+    return "Local Network Awareness";
+  }
   if (finding.tags.includes("questionnaire")) {
     return "Questionnaire";
   }

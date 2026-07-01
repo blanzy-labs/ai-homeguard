@@ -5,6 +5,7 @@ from app.api.routes.demo import router as demo_router
 from app.api.routes.health import router as health_router
 from app.api.routes.knowledge import router as knowledge_router
 from app.api.routes.local_checks import router as local_checks_router
+from app.api.routes.network import router as network_router
 from app.api.routes.questionnaire import router as questionnaire_router
 from app.api.routes.reports import router as reports_router
 from app.api.routes.version import router as version_router
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
     application.include_router(health_router)
     application.include_router(version_router)
     application.include_router(knowledge_router)
+    application.include_router(network_router)
     application.include_router(demo_router)
     application.include_router(questionnaire_router)
     application.include_router(reports_router)

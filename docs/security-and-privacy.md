@@ -2,7 +2,7 @@
 
 AI HomeGuard is designed as a local-first defensive cyber hygiene app.
 
-Slice 8 includes:
+Slice 9 includes:
 
 - No telemetry
 - No database
@@ -18,11 +18,13 @@ Slice 8 includes:
 - Combined reports from questionnaire findings and optional local device findings
 - User-triggered Markdown and JSON exports
 - Local static D3FEND-informed guidance catalog and enrichment service
+- Authorization-gated passive local network awareness
 - Privacy-safe runtime context through `/runtime`
 - Unsupported-platform reports when a local audit route is called from the wrong operating system
 - No sudo, administrator escalation, package installs, or remediation
 - No ClamAV file scans
 - No real router or network checks
+- No active network scanning, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, or public target scanning
 - Static fake demo data only
 - Questionnaire answers kept in browser memory and submitted only to the local backend
 - No questionnaire answer persistence
@@ -44,6 +46,8 @@ Markdown and JSON exports are user-triggered. The backend returns export content
 
 The D3FEND-informed guidance catalog is local and static. AI HomeGuard does not fetch live MITRE data, call an AI provider, send telemetry, persist catalog lookups, or change settings while enriching guidance. Guidance is educational and may be incomplete.
 
+Network awareness authorization is request-level only and is not stored. Slice 9 uses passive local context only. It does not accept target input fields, scan public IPs, enumerate all devices, log in to routers, request router credentials, capture packets, or test credentials. Passive neighbor information is summarized by count only. Full MAC addresses and hostnames are not shown by default.
+
 Windows local checks are designed to be read-only. They do not enable or disable Defender, Firewall, BitLocker, Remote Desktop, SMB, services, or Windows Update. They do not attempt remediation and do not require administrator privileges for baseline behavior.
 
 macOS local checks are designed to be read-only. They read firewall, FileVault, Gatekeeper, Remote Login, listening port, and version/update visibility where available. They do not change System Settings, enable or disable sharing, request administrator credentials, or contact update services.
@@ -55,6 +59,8 @@ The unified local device audit auto-detects the runtime platform and dispatches 
 Runtime context is intentionally minimal. It may report detected platform, runtime environment, architecture, whether a hostname exists, notes, and limitations. It does not return hostname strings, usernames, personal paths, environment variables, browser history, documents, tokens, passwords, or secrets.
 
 Windows, macOS, and Linux listening ports are local-only socket summaries. AI HomeGuard does not scan remote hosts or the local network. User-facing output summarizes ports and generic service hints, not usernames, file paths, process command arguments, passwords, tokens, or secrets.
+
+Network awareness may run read-only local route or neighbor-cache visibility commands when authorized. These commands are passive local context only and do not send packets to other devices. In Docker, network context may reflect the container network instead of the home network.
 
 The local Administrators group check reports counts and categories only. Full local administrator usernames are intentionally not included in user-facing findings.
 

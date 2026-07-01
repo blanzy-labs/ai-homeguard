@@ -8,6 +8,7 @@ import {
   getLocalDeviceReport,
   getLinuxLocalReport,
   getMacOSLocalReport,
+  getNetworkAwarenessReport,
   getQuestionnaire,
   getQuestionnaireReport,
   getRuntimeContext,
@@ -24,6 +25,7 @@ import { DemoDashboard } from "./components/DemoDashboard";
 import { GuidanceCatalogPanel } from "./components/GuidanceCatalogPanel";
 import { LocalAuditPanel } from "./components/LocalAuditPanel";
 import { ModeCard } from "./components/ModeCard";
+import { NetworkAwarenessPanel } from "./components/NetworkAwarenessPanel";
 import { QuestionnaireResults } from "./components/QuestionnaireResults";
 import { QuestionnaireScreen } from "./components/QuestionnaireScreen";
 import { StatusPanel } from "./components/StatusPanel";
@@ -38,6 +40,7 @@ type FlowStep =
   | "full-options"
   | "combined-results"
   | "guidance"
+  | "network"
   | "demo"
   | "local"
   | "windows"
@@ -89,8 +92,12 @@ export default function App() {
   const [combinedSubmission, setCombinedSubmission] = useState<QuestionnaireSubmission | null>(null);
   const [includeLocalInCombined, setIncludeLocalInCombined] = useState(false);
   const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
+  const [includeNetworkInCombined, setIncludeNetworkInCombined] = useState(false);
+  const [combinedNetworkAcknowledged, setCombinedNetworkAcknowledged] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [guidanceCatalog, setGuidanceCatalog] = useState<GuidanceCatalogState>({ state: "idle" });
+  const [networkReport, setNetworkReport] = useState<ReportState>({ state: "idle" });
+  const [networkAcknowledged, setNetworkAcknowledged] = useState(false);
   const [localReport, setLocalReport] = useState<ReportState>({ state: "idle" });
   const [runtimeContext, setRuntimeContext] = useState<RuntimeState>({ state: "idle" });
   const [windowsReport, setWindowsReport] = useState<ReportState>({ state: "idle" });
@@ -200,6 +207,10 @@ export default function App() {
     }
   }
 
+  function openNetworkAwareness() {
+    setFlowStep("network");
+  }
+
   async function submitQuestionnaire(submission: QuestionnaireSubmission) {
     setIsSubmittingQuestionnaire(true);
     setQuestionnaireReport({ state: "loading" });
@@ -235,6 +246,13 @@ export default function App() {
       });
       return;
     }
+    if (includeNetworkInCombined && !combinedNetworkAcknowledged) {
+      setCombinedReport({
+        state: "error",
+        message: "Please acknowledge passive local network awareness before including network context.",
+      });
+      return;
+    }
     setCombinedReport({ state: "loading" });
     setExportStatus(null);
     setFlowStep("combined-results");
@@ -242,8 +260,16 @@ export default function App() {
       const response = await getCombinedReport({
         include_questionnaire: true,
         include_local_device: includeLocalInCombined,
+        include_network_awareness: includeNetworkInCombined,
         questionnaire_submission: combinedSubmission,
         acknowledged_authorization: includeLocalInCombined ? combinedLocalAcknowledged : false,
+        network_authorization: includeNetworkInCombined
+          ? {
+              acknowledged: combinedNetworkAcknowledged,
+              scope: "home_network",
+              statement_version: "v0.1.0-slice-9",
+            }
+          : null,
       });
       setCombinedReport({ state: "ready", response });
     } catch (error) {
@@ -279,6 +305,30 @@ export default function App() {
       setLocalReport({
         state: "error",
         message: error instanceof Error ? error.message : "Local device report unavailable",
+      });
+    }
+  }
+
+  async function runNetworkAwareness() {
+    if (!networkAcknowledged) {
+      setNetworkReport({
+        state: "error",
+        message: "Network awareness requires authorization acknowledgement.",
+      });
+      return;
+    }
+    setNetworkReport({ state: "loading" });
+    try {
+      const report = await getNetworkAwarenessReport({
+        acknowledged: true,
+        scope: "home_network",
+        statement_version: "v0.1.0-slice-9",
+      });
+      setNetworkReport({ state: "ready", report });
+    } catch (error) {
+      setNetworkReport({
+        state: "error",
+        message: error instanceof Error ? error.message : "Network awareness report unavailable",
       });
     }
   }
@@ -353,8 +403,8 @@ export default function App() {
         <h1>AI HomeGuard</h1>
         <p className="subtitle">Local Home Security Audit MVP</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper. Slice 8 adds local D3FEND-informed guidance to
-          questionnaire, local device, combined, and exportable reports.
+          A defensive home cyber hygiene helper. Slice 9 adds authorization-first passive local
+          network awareness without active discovery or port scanning.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
@@ -401,6 +451,8 @@ export default function App() {
             <li>Does not request sudo, administrator escalation, or passwords.</li>
             <li>Does not exploit, attack, brute-force, or packet-sniff.</li>
             <li>Does not scan networks or public targets.</li>
+            <li>Network awareness uses passive local context only after explicit authorization.</li>
+            <li>Network awareness does not run active discovery, port scans, or packet capture.</li>
             <li>Does not upload data or call an AI provider.</li>
             <li>Does not save reports automatically.</li>
             <li>Exports are created only when you click an export button.</li>
@@ -458,6 +510,12 @@ export default function App() {
               status="Available"
               description="AI HomeGuard will choose the right local checks for this runtime."
               onSelect={openLocalAudit}
+            />
+            <ModeCard
+              title="Local Network Awareness"
+              status="Available"
+              description="Review passive local network context and safety guidance. No active discovery or port scanning is run."
+              onSelect={openNetworkAwareness}
             />
             <ModeCard
               title="Windows Device Audit"
@@ -520,6 +578,18 @@ export default function App() {
 
       {flowStep === "guidance" && guidanceCatalog.state === "ready" && (
         <GuidanceCatalogPanel catalog={guidanceCatalog.catalog} onBackToModes={() => setFlowStep("mode")} />
+      )}
+
+      {flowStep === "network" && (
+        <NetworkAwarenessPanel
+          acknowledged={networkAcknowledged}
+          onAcknowledgeChange={setNetworkAcknowledged}
+          report={networkReport.state === "ready" ? networkReport.report : null}
+          loading={networkReport.state === "loading"}
+          error={networkReport.state === "error" ? networkReport.message : null}
+          onRun={runNetworkAwareness}
+          onBackToModes={() => setFlowStep("mode")}
+        />
       )}
 
       {flowStep === "questionnaire" && questionnaire.state === "loading" && (
@@ -588,8 +658,9 @@ export default function App() {
             <p className="section-kicker">Full report</p>
             <h2 id="full-options-heading">Choose report sources</h2>
             <p className="muted">
-              The questionnaire is included. You can also add read-only local device checks. No
-              network scan is run, no settings are changed, and no data is uploaded.
+              The questionnaire is included. You can also add read-only local device checks and
+              passive local network awareness. No active scan is run, no ports are scanned, no
+              settings are changed, and no data is uploaded.
             </p>
           </div>
 
@@ -621,6 +692,35 @@ export default function App() {
             </label>
           ) : null}
 
+          <label className="acknowledgement">
+            <input
+              type="checkbox"
+              checked={includeNetworkInCombined}
+              onChange={(event) => {
+                setIncludeNetworkInCombined(event.target.checked);
+                if (!event.target.checked) {
+                  setCombinedNetworkAcknowledged(false);
+                }
+              }}
+            />
+            <span>Include Local Network Awareness findings in the combined report.</span>
+          </label>
+
+          {includeNetworkInCombined ? (
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={combinedNetworkAcknowledged}
+                onChange={(event) => setCombinedNetworkAcknowledged(event.target.checked)}
+              />
+              <span>
+                I confirm this is my own home network or a network I am authorized to assess. I
+                understand this uses passive local context only. No active scanning, port scanning,
+                packet capture, router login, or public target scanning will be performed.
+              </span>
+            </label>
+          ) : null}
+
           <div className="flow-actions">
             <button className="secondary-button" type="button" onClick={() => setFlowStep("full-questionnaire")}>
               Back
@@ -628,7 +728,10 @@ export default function App() {
             <button
               className="primary-button"
               type="button"
-              disabled={includeLocalInCombined && !combinedLocalAcknowledged}
+              disabled={
+                (includeLocalInCombined && !combinedLocalAcknowledged) ||
+                (includeNetworkInCombined && !combinedNetworkAcknowledged)
+              }
               onClick={buildCombinedReport}
             >
               Build Combined Report

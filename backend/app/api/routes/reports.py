@@ -5,6 +5,7 @@ from app.demo.demo_report import get_demo_report
 from app.models.questionnaire import QuestionnaireSubmission
 from app.models.report import HomeGuardReport
 from app.models.report_request import CombinedReportRequest, CombinedReportResponse, ExportFormat
+from app.network.runner import NETWORK_AUTHORIZATION_ERROR, NETWORK_SCOPE_ERROR, run_network_awareness
 from app.questionnaire.report_builder import build_questionnaire_report
 from app.reports.json_export import render_json_export
 from app.reports.markdown import render_markdown_report
@@ -30,12 +31,19 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
             status_code=400,
             detail="Local device audit requires authorization acknowledgement.",
         )
+    if request.include_network_awareness and (
+        request.network_authorization is None or not request.network_authorization.acknowledged
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Network awareness requires authorization acknowledgement.",
+        )
     if request.include_questionnaire and request.questionnaire_submission is None:
         raise HTTPException(
             status_code=400,
             detail="Questionnaire submission is required when include_questionnaire is true.",
         )
-    if not request.include_questionnaire and not request.include_local_device:
+    if not request.include_questionnaire and not request.include_local_device and not request.include_network_awareness:
         raise HTTPException(status_code=400, detail="Select at least one report source.")
 
     reports: list[HomeGuardReport] = []
@@ -49,12 +57,22 @@ def read_combined_report(request: CombinedReportRequest) -> CombinedReportRespon
         reports.append(local_report)
         if local_report.runtime_context:
             limitations.extend(local_report.runtime_context.limitations)
+    if request.include_network_awareness and request.network_authorization is not None:
+        try:
+            network_report = run_network_awareness(request.network_authorization)
+        except ValueError as error:
+            detail = str(error)
+            if detail not in {NETWORK_AUTHORIZATION_ERROR, NETWORK_SCOPE_ERROR}:
+                detail = "Network awareness could not be started safely."
+            raise HTTPException(status_code=400, detail=detail) from error
+        reports.append(network_report)
+        limitations.append("Network awareness is passive only; no active discovery or port scanning was run.")
 
     combined = merge_homeguard_reports(reports, mode="combined")
     combined.safety_notes = _combined_safety_notes(combined.safety_notes)
     limitations.extend(
         [
-            "No network audit is included in Slice 8.",
+            "No active network discovery or port scanning is included in Slice 9.",
             "Exports are generated only when requested and are not saved automatically.",
         ]
     )

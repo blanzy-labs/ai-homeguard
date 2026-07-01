@@ -8,9 +8,10 @@ from app.knowledge.guidance_service import enrich_finding_guidance
 from app.version import APP_NAME, APP_VERSION
 
 COMBINED_REPORT_DISCLAIMER = (
-    "This combined AI HomeGuard report may include questionnaire-derived findings and read-only "
-    "local device audit findings. AI HomeGuard did not scan the network, change settings, upload "
-    "data, call an AI provider, or save this report automatically."
+    "This combined AI HomeGuard report may include questionnaire-derived findings, read-only "
+    "local device audit findings, and passive local network awareness findings. AI HomeGuard did "
+    "not run active network discovery, scan ports, change settings, upload data, call an AI "
+    "provider, or save this report automatically."
 )
 
 

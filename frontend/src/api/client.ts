@@ -93,7 +93,7 @@ export type HomeGuardReport = {
   app: string;
   version: string;
   generated_at: string;
-  mode: "demo" | "local" | "combined";
+  mode: "demo" | "local" | "combined" | "network_awareness";
   platform_scope: string[];
   summary: ReportSummary;
   findings: Finding[];
@@ -156,8 +156,10 @@ export type QuestionnaireResult = {
 export type CombinedReportRequest = {
   include_local_device?: boolean;
   include_questionnaire?: boolean;
+  include_network_awareness?: boolean;
   questionnaire_submission?: QuestionnaireSubmission | null;
   acknowledged_authorization?: boolean;
+  network_authorization?: NetworkAuthorization | null;
   export_format?: "none" | "markdown" | "json";
 };
 
@@ -192,6 +194,24 @@ export type D3FENDCatalogResponse = {
   guidance: D3FENDCatalogEntry[];
 };
 
+export type NetworkAuthorization = {
+  acknowledged: boolean;
+  scope: "none" | "home_network" | "device_only" | "demo";
+  statement_version: string;
+  timestamp?: string | null;
+  notes?: string | null;
+};
+
+export type NetworkSafetyPolicy = {
+  authorization_statement: string;
+  allowed_scopes: string[];
+  disallowed_actions: string[];
+  private_network_only: string;
+  no_public_scanning: string;
+  no_active_scanning: string;
+  statement_version: string;
+};
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function getJson<T>(path: string): Promise<T> {
@@ -220,6 +240,10 @@ export async function getQuestionnaire(): Promise<QuestionnaireSection[]> {
 
 export async function getD3FENDGuidanceCatalog(): Promise<D3FENDCatalogResponse> {
   return getJson<D3FENDCatalogResponse>("/knowledge/d3fend-guidance");
+}
+
+export async function getNetworkSafetyPolicy(): Promise<NetworkSafetyPolicy> {
+  return getJson<NetworkSafetyPolicy>("/network/safety-policy");
 }
 
 export async function evaluateQuestionnaire(
@@ -268,6 +292,27 @@ export async function getLocalDeviceReport(): Promise<HomeGuardReport> {
 
 export async function getRuntimeContext(): Promise<RuntimeContext> {
   return getJson<RuntimeContext>("/runtime");
+}
+
+export async function getNetworkAwarenessReport(
+  authorization: NetworkAuthorization,
+): Promise<HomeGuardReport> {
+  const response = await fetch(`${apiBaseUrl}/reports/network-awareness`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(authorization),
+  });
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      message = payload.detail ?? message;
+    } catch {
+      message = await response.text();
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<HomeGuardReport>;
 }
 
 export async function getCombinedReport(request: CombinedReportRequest): Promise<CombinedReportResponse> {

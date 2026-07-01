@@ -377,14 +377,16 @@ h3 {
 }
 
 .windows-boundaries,
-.local-boundaries {
+.local-boundaries,
+.network-boundaries {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .windows-boundaries span,
-.local-boundaries span {
+.local-boundaries span,
+.network-boundaries span {
   padding: 8px 10px;
   border: 1px solid #b6d0c8;
   border-radius: 999px;

@@ -27,6 +27,12 @@
 - Guidance enrichment validates demo, questionnaire, local, combined, Markdown, and JSON report paths
 - No live MITRE/D3FEND remote fetch included
 - No certification, guarantee, or full-coverage guidance claims included
+- Network awareness authorization validation passes
+- Private/public network guardrail validation passes
+- Network awareness route validates passive-only report generation
+- Combined report validates optional authorized network awareness inclusion
+- No active scan, Nmap, ping sweep, port scan, packet capture, router credential, or public target feature included
+- Network privacy validation confirms MAC addresses and hostnames are not exposed by default
 - No report auto-save or backend persistence included
 - Docker limitation note appears when container runtime is detected
 - Windows local check route validates unsupported-platform behavior on macOS/Linux

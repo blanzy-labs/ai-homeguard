@@ -2,7 +2,7 @@
 
 AI HomeGuard uses a simple local-first web app structure.
 
-## Current Slice 8 Components
+## Current Slice 9 Components
 
 - Backend: FastAPI app with `/health` and `/version`
 - Models: Pydantic evidence, guidance, finding, summary, and report models
@@ -12,11 +12,12 @@ AI HomeGuard uses a simple local-first web app structure.
 - Unified local device audit: runtime context, auto-detection, and dispatch to one matching platform runner
 - Combined report and export layer: report merge service, combined report route, Markdown export, and JSON export
 - Knowledge layer: local D3FEND-informed guidance catalog, enrichment service, and knowledge API routes
+- Network awareness foundation: authorization model, private-network guardrails, passive local context service, network report runner, and safety policy route
 - Frontend: React, Vite, and TypeScript safety-first flow, questionnaire, platform audit panels, results, and demo dashboard UI
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
 
-Slice 8 adds a deterministic local D3FEND-informed knowledge layer on top of the combined report and export foundation. It does not include new deep checks, network discovery, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
+Slice 9 adds an authorization-gated safe local network awareness foundation. It does not include active network scanning, Nmap, ping sweeps, port scanning, packet capture, router login, credential testing, public target scanning, remediation, OpenAI calls, AI provider integrations, persistence, sudo/admin escalation, package installation, ClamAV file scans, live MITRE/D3FEND fetching, or full D3FEND ontology parsing.
 
 ## Finding and Report Model
 
@@ -67,12 +68,12 @@ Future real checks should use the same finding/report model so questionnaire fin
 ```text
 frontend -> questionnaire answers + optional local audit authorization
 frontend -> POST /reports/combined
-/reports/combined -> questionnaire report builder + optional local_runner
+/reports/combined -> questionnaire report builder + optional local_runner + optional network awareness runner
 merge_homeguard_reports -> combined HomeGuardReport
 frontend -> POST /reports/export/markdown or /reports/export/json when user clicks export
 ```
 
-The combined route works in memory only. It does not persist questionnaire answers, local audit results, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement.
+The combined route works in memory only. It does not persist questionnaire answers, local audit results, network awareness results, or exports. Local device audit findings are included only when the request explicitly asks for them and includes authorization acknowledgement. Network awareness findings are included only when the request includes acknowledged `home_network` or `demo` authorization.
 
 The merge service in `backend/app/reports/merge.py` preserves findings, enriches D3FEND-informed guidance, preserves educational ATT&CK context, recomputes summary counts, combines safety notes, and generates prioritized top actions. Future explicitly authorized network findings can be merged into this same report shape.
 
@@ -109,6 +110,31 @@ Knowledge API routes:
 
 The catalog is D3FEND-informed educational guidance, not official certification, not full D3FEND coverage, and not a guarantee of security. No live MITRE data, remote catalog data, or AI provider is fetched at runtime. A future slice may consider full ontology ingestion, but that is outside v0.1.0.
 
+## Local Network Awareness Foundation
+
+```text
+frontend -> network authorization acknowledgement
+frontend -> POST /reports/network-awareness
+network runner -> passive context service -> network findings -> HomeGuardReport
+combined report -> optional network_authorization -> network runner -> merge
+```
+
+Slice 9 introduces:
+
+- `backend/app/models/network.py`: request-level authorization, scope, and passive context models
+- `backend/app/network/guardrails.py`: private/local target classification and future scan-scope validation
+- `backend/app/network/context.py`: passive local context parsing from read-only local route/neighbor cache commands
+- `backend/app/network/findings.py`: network awareness findings using the existing Finding model
+- `backend/app/network/runner.py`: authorization-gated report runner
+- `GET /network/safety-policy`: authorization/disallowed-action policy
+- `POST /reports/network-awareness`: passive local network awareness report
+
+The guardrails classify RFC1918 IPv4 ranges, loopback, link-local, public IPs, IPv6 loopback, and IPv6 unique local addresses. Hostnames and domains are rejected as future scan targets in v0.1.0. Public targets are rejected.
+
+The passive context service may read local route and neighbor-cache information through allowlisted read-only commands such as `route -n get default`, `netstat -rn`, `arp -a`, `ip route`, `ip neigh show`, `ipconfig`, and `route print`. These commands are used only for local passive context; they do not send discovery packets, scan ports, run Nmap, capture packets, log in to routers, or test credentials. User-facing output summarizes counts and private-context presence, not full MAC addresses or hostnames.
+
+In Docker, network context may describe the container network rather than the host or home network. Future active private-network discovery may be considered later with strict guardrails and explicit authorization, but it is not part of Slice 9.
+
 ## Platform Check Architecture
 
 Platform checks use a guarded command runner and explicit platform detection:
@@ -122,6 +148,9 @@ Platform checks use a guarded command runner and explicit platform detection:
 - `backend/app/reports/json_export.py`: JSON export helper
 - `backend/app/knowledge/d3fend_catalog.py`: local curated defensive guidance catalog
 - `backend/app/knowledge/guidance_service.py`: deterministic guidance lookup and enrichment
+- `backend/app/network/guardrails.py`: private/public target classification for future network checks
+- `backend/app/network/context.py`: passive local network context service
+- `backend/app/network/runner.py`: authorization-gated network awareness report runner
 - `backend/app/checks/windows/base.py`: Windows check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/macos/base.py`: macOS check context, allowlist, parsing helpers, and finding helpers
 - `backend/app/checks/linux/base.py`: Linux check context, allowlist, parsing helpers, and finding helpers

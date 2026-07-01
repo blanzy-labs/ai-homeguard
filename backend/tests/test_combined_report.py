@@ -33,7 +33,7 @@ def test_combined_report_questionnaire_only_returns_combined_report() -> None:
     assert payload["report"]["findings"]
     assert payload["report"]["summary"]["top_actions"]
     assert payload["warnings"] == []
-    assert any("No network audit" in item for item in payload["limitations"])
+    assert any("No active network discovery" in item for item in payload["limitations"])
 
 
 def test_combined_report_local_audit_requires_authorization() -> None:

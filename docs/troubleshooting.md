@@ -127,6 +127,26 @@ If a custom or future finding has no `d3fend_guidance`, check whether its catego
 
 If `/knowledge/d3fend-guidance/{guidance_id}` returns 404, confirm the ID is one of the bundled catalog IDs returned by `/knowledge/d3fend-guidance`.
 
+## Network Awareness Authorization Required
+
+`POST /reports/network-awareness` requires `acknowledged: true` and `scope: home_network` or `demo`. Authorization is request-level only and is not stored.
+
+## Docker Network Context Looks Different
+
+When the backend runs in Docker, passive network context may describe the container network rather than the host or home network. Run the backend natively for host-level local network context.
+
+## No Devices Are Shown
+
+Slice 9 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list.
+
+## Platform Network Command Is Unavailable
+
+If local route or neighbor-cache commands are unavailable, AI HomeGuard returns limited visibility instead of requesting sudo/admin rights or running alternative active discovery.
+
+## Public Scope Rejected
+
+AI HomeGuard does not support public target scanning. Future target/range inputs must pass private/local guardrails, and Slice 9 does not expose target inputs.
+
 ## PowerShell Is Unavailable on Windows
 
 The Windows check foundation uses read-only PowerShell commands for most checks. If PowerShell is unavailable or blocked, affected checks return `unable_to_check` instead of changing settings or requiring remediation.
