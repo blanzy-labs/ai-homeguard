@@ -24,7 +24,7 @@ The backend runs in Docker on a Mac. The unified local audit reports Linux/conta
 
 ## Deferred Network Discovery
 
-A household wants AI HomeGuard to list devices automatically. v0.1.0 does not run active discovery, Nmap, ping sweeps, port scans, packet capture, router login, credential testing, or public target scanning. Slice 13 - Safe Private Network Discovery is the deferred follow-up for explicit, user-controlled private-network discovery with strict guardrails.
+A household wants AI HomeGuard to list devices automatically. v0.1.0 does not run active discovery, Nmap, ping sweeps, port scans, packet capture, router login, credential testing, or public target scanning. Safe private network discovery is a deferred future follow-up for explicit, user-controlled private-network discovery with strict guardrails.
 
 ## Unsupported Platform Example
 

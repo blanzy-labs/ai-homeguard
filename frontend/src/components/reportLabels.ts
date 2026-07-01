@@ -62,7 +62,7 @@ export function evidenceSourceLabel(finding: Finding) {
     return "Passive Network Awareness";
   }
   if (tags.includes("unsupported-platform") || sources.some((source) => source.includes("platform guard"))) {
-    return "Unsupported Platform";
+    return "Could Not Check";
   }
   if (sources.some((source) => source.includes("runtime"))) {
     return "Runtime Context";

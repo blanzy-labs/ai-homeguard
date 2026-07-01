@@ -32,6 +32,7 @@ AI HomeGuard v0.1.0 includes:
 - No real router login or router credential collection
 - No active network scanning, Nmap, ping sweeps, ARP scanning, port scanning, packet capture, device fingerprinting, router login, credential testing, or public target scanning
 - Static fake demo data only
+- Dashboard-first Run HomeGuard Check flow that reuses existing backend reports and exports
 - Questionnaire answers kept in browser memory and submitted only to the local backend
 - No questionnaire answer persistence
 - No browser persistence of questionnaire answers, device inventory entries, reports, or export status
@@ -47,7 +48,12 @@ The questionnaire avoids passwords, credentials, addresses, usernames, email add
 
 The questionnaire endpoints do not upload data to an external service and do not write answers to disk. The returned report is generated in memory from the submitted answers. The v0.1.0 frontend stores answers and reports in React state only; it does not use `localStorage`, IndexedDB, cookies, or telemetry for questionnaire answers, reports, exports, device inventory entries, or scan data.
 
-The only browser storage used by the v0.1.0 frontend is `sessionStorage` key `ai-homeguard-safety-ack-v0.1.0`. It stores a versioned safety acknowledgement for the current browser session so users do not have to accept the same safety terms repeatedly while moving between flows. It does not contain questionnaire answers, report data, device inventory entries, secrets, IP addresses, MAC addresses, hostnames, router information, exports, telemetry IDs, or account identifiers.
+The only browser storage used by the v0.1.0 frontend is low-risk `sessionStorage` UI state:
+
+- `ai-homeguard-safety-ack-v0.1.0`: versioned safety acknowledgement for the current browser session
+- `ai-homeguard-advanced-options-open-v0.1.0`: whether the Advanced Options drawer is open
+
+These keys let users move through the local app without repeated safety prompts and keep the advanced drawer state predictable. They do not contain questionnaire answers, report data, device inventory entries, secrets, IP addresses, MAC addresses, hostnames, router information, exports, telemetry IDs, or account identifiers.
 
 Combined report endpoints generate reports in memory. They do not write reports to disk, create a database record, upload data, call an AI provider, or add telemetry. If local device findings are requested, the request must include explicit authorization acknowledgement. If device inventory findings are requested, the request must include manual/demo inventory data.
 

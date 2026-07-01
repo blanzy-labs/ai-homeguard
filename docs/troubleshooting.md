@@ -77,7 +77,39 @@ Hard-refresh the browser tab, stop and restart the Vite dev server, or clear the
 
 ## Safety Acknowledgement Appears Again
 
-AI HomeGuard stores only the versioned safety acknowledgement in `sessionStorage` for the current browser session. It does not store questionnaire answers, reports, device inventory entries, exports, or telemetry. If you close the browser session, clear site data, or use a private browsing window, the acknowledgement may appear again.
+AI HomeGuard stores only low-risk UI state in `sessionStorage` for the current browser session: the versioned safety acknowledgement and whether Advanced Options is open. It does not store questionnaire answers, reports, device inventory entries, exports, or telemetry. If you close the browser session, clear site data, or use a private browsing window, the acknowledgement may appear again.
+
+## Dashboard Says Some Areas Were Not Checked
+
+The HomeGuard Dashboard shows what was checked, what still needs your input, and what could not be checked in the current runtime. Areas can be marked Not checked or Needs your input when you skipped quick questions, did not include optional Router & Wi-Fi awareness, did not add manual device inventory entries, or ran the backend in Docker with limited host visibility.
+
+Run HomeGuard Check again and keep quick questions enabled for more complete account, backup, router, and Wi-Fi coverage. Add devices in Device Inventory Helper before including Smart Devices.
+
+## I Do Not See Device Checks
+
+Run HomeGuard Check includes This Device by default, but the backend can only inspect the runtime where it is running. If the backend is unavailable, running in a limited container, or on an unsupported platform route, the dashboard may show limited visibility or Could Not Check results instead of full device findings.
+
+Confirm the backend is running and call:
+
+```bash
+curl http://localhost:8000/runtime
+curl http://localhost:8000/reports/local-device
+```
+
+For best host-level results, run the backend directly on the computer you want to review.
+
+## I Ran the Check and It Says Container or Linux on My Mac
+
+Docker Compose runs the backend inside a Linux container. On a Mac host, that means the backend may correctly report Linux/container runtime visibility even though your physical computer is a Mac. This is expected and should appear as a dashboard limitation.
+
+For host-level macOS checks, run the backend natively:
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload
+```
+
+Then run the frontend separately and use Run HomeGuard Check again.
 
 ## Windows Checks Are Unavailable on Mac or Linux
 
@@ -95,15 +127,35 @@ macOS local checks only run when AI HomeGuard is running directly on macOS. On W
 
 Linux local checks only run when AI HomeGuard is running on Linux. On Windows or macOS, `/reports/linux-local` returns an unsupported-platform report and does not run Linux commands.
 
-## Unsupported Platform Result
+## Could Not Check or Unsupported Platform Result
 
-Unsupported-platform results are expected when a platform-specific route is opened from the wrong operating system or when the runtime cannot be matched safely. AI HomeGuard returns `unable_to_check` findings instead of running commands for the wrong platform.
+Could Not Check or unsupported-platform results are expected when a platform-specific route is opened from the wrong operating system or when the runtime cannot be matched safely. AI HomeGuard returns `unable_to_check` findings instead of running commands for the wrong platform.
 
 ## Docker Platform Looks Different From the Host
 
 Docker Compose runs the backend inside a Linux container. On a Mac host, `/runtime` and `/reports/local-device` may report Linux/container runtime visibility. `/reports/macos-local` returns unsupported-platform output in Docker, and `/reports/linux-local` checks the container environment rather than the Mac. Run the backend natively with `uv run uvicorn app.main:app --reload` for true host-level macOS checks.
 
 The `/runtime` route can help confirm what the backend sees. It returns privacy-safe runtime context without the hostname string.
+
+## Running the Backend Natively for Better Host Checks
+
+Docker is useful for a consistent local web app, but native backend execution gives the platform check modules the best view of the host computer.
+
+Use one terminal for the backend:
+
+```bash
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload
+```
+
+Use another terminal for the frontend:
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
 
 ## Manual Platform Routes for Debugging
 
@@ -145,7 +197,7 @@ The report review filters can hide findings by status, platform, evidence source
 
 ## Technical Details Are Collapsed
 
-Finding cards keep technical details and evidence collapsed by default. Open the Technical details and evidence toggle on a finding to review evidence, technical title, and educational ATT&CK context when present.
+Finding cards keep technical details and evidence collapsed by default. Open the More Detail toggle on a finding to review evidence, detailed title, and educational ATT&CK context when present.
 
 ## Guidance Catalog Route Is Unavailable
 
@@ -175,7 +227,7 @@ When the backend runs in Docker, passive network context may describe the contai
 
 ## Network Awareness Shows No Passive Device Entries
 
-v0.1.0 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list. Active private-network discovery is deferred to Slice 13 - Safe Private Network Discovery, which must require explicit authorization, private-network-only guardrails, no credential testing, no exploit logic, no packet capture, and no router login.
+v0.1.0 does not actively discover devices. Passive local caches can be empty or incomplete. Your router app or admin page may show a more complete device list. Active private-network discovery is deferred to a future version and must require explicit authorization, private-network-only guardrails, no credential testing, no exploit logic, no packet capture, and no router login.
 
 ## Device Inventory Helper Has No Devices
 

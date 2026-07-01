@@ -14,7 +14,7 @@ AI HomeGuard uses a simple local-first web app structure.
 - Knowledge layer: local D3FEND-informed guidance catalog, enrichment service, and knowledge API routes
 - Network awareness foundation: authorization model, private-network guardrails, passive local context service, network report runner, and safety policy route
 - Device inventory foundation: manual/demo inventory models, deterministic fake inventory, analyzer, report route, combined integration, and generic router guidance
-- Frontend: React, Vite, and TypeScript safety-first flow, recommended/secondary/advanced mode navigation, questionnaire, platform audit panels, network awareness, device inventory helper, shared report review components, results, and demo dashboard UI
+- Frontend: React, Vite, and TypeScript dashboard-first Run HomeGuard Check flow, de-emphasized Advanced Options, questionnaire, platform audit panels, network awareness, device inventory helper, shared report/dashboard components, results, and demo dashboard UI
 - Frontend tests: dependency-free Node tests covering navigation, report review contracts, source badges, guidance labels, safety copy, and forbidden overclaiming language
 - Docker: Docker Compose services for backend and frontend
 - Docs: safety, privacy, install, troubleshooting, release, and validation notes
@@ -47,7 +47,7 @@ Future real checks should generate findings using the same model so the frontend
 ## Questionnaire Flow
 
 ```text
-welcome -> safety acknowledgement -> choose mode -> questionnaire -> questionnaire report
+welcome -> safety acknowledgement -> Run HomeGuard Check -> quick questions -> dashboard
 ```
 
 The frontend keeps acknowledgement state and questionnaire answers in browser memory only. Answers are sent to the local FastAPI backend when the user submits the questionnaire, and the backend returns a `HomeGuardReport` built from questionnaire-derived findings. The backend does not write answers to disk or send them to any external service.
@@ -88,10 +88,11 @@ The export layer:
 
 Later slices may add AI-assisted summaries generated from the same report model after explicit user consent.
 
-## Frontend Report Review Flow
+## Frontend Dashboard and Report Review Flow
 
-v0.1.0 consolidates report rendering around reusable frontend components:
+v0.1.0 consolidates report rendering around reusable frontend components and a dashboard-first combined-report surface:
 
+- `HomeGuardDashboard`: primary report surface for the guided Run HomeGuard Check flow and Demo Mode, with overall status, top three actions, coverage, simple next steps, grouped findings, More Detail, and export
 - `ReportReviewPanel`: shared report shell for demo, questionnaire, combined, local device, network awareness, and device inventory reports
 - `ReportSummaryCard`: calm overall posture label, score, disclaimer, and report context
 - `StatusCounts`: Good, Review, Fix Soon, Needs Attention, and Unable to Check counts
@@ -105,22 +106,22 @@ v0.1.0 consolidates report rendering around reusable frontend components:
 The frontend navigation is organized as:
 
 ```text
-welcome -> safety acknowledgement -> mode picker
-mode picker -> recommended Full HomeGuard Report
-mode picker -> secondary single-source paths
-mode picker -> visually de-emphasized advanced/manual platform paths
-report source -> ReportReviewPanel -> user-triggered Markdown/JSON export
+welcome -> Run HomeGuard Check
+Run HomeGuard Check -> safety acknowledgement -> guided setup -> quick questions or selected local checks
+dashboard -> top actions -> grouped findings -> user-triggered Markdown/JSON export
+welcome or primary nav -> Advanced Options -> secondary single-source paths
+Advanced Options -> visually de-emphasized advanced/manual platform paths
 ```
 
-The report review flow keeps technical evidence collapsed by default, shows safety notes and limitations near export, and provides Start Over and Clear Current Report actions. These actions clear in-memory report/form state only; they do not delete files, call cleanup commands, reset the versioned safety acknowledgement, or change local settings.
+The dashboard keeps evidence collapsed behind More Detail, shows what was checked and what still needs user input, keeps safety notes and limitations near export, and provides Start Over and Clear Current Report actions. These actions clear in-memory report/form state only; they do not delete files, call cleanup commands, reset the versioned safety acknowledgement, or change local settings.
 
-## Dashboard-First Follow-Up Direction
+## Dashboard-First Direction
 
-Manual review after Slice 12A identified dashboard-first UX as a Slice 13 product direction. Non-technical home users should not need to understand or choose between technical modules before getting value. The preferred primary path is a simple `Run HomeGuard Check` or `Full HomeGuard Report` flow that presents Demo Mode, Local Device Audit, Questionnaire, Local Network Awareness, and Device Inventory Helper as parts of one product experience.
+Manual review after Slice 12A identified dashboard-first UX as the Slice 13 product direction. Non-technical home users should not need to understand or choose between technical modules before getting value. Slice 13 implements a primary `Run HomeGuard Check` flow and presents Demo Mode, Local Device Audit, Questionnaire, Local Network Awareness, and Device Inventory Helper as parts of one product experience.
 
-Future dashboard work should prioritize overall status, top actions, what was checked, what still needs user input, what could not be checked, and simple next steps. Advanced/manual platform checks should remain available but visually de-emphasized. The app should stay local web-based for UI consistency across platforms, while the backend remains responsible for platform-specific checks.
+The dashboard prioritizes overall status, top actions, what was checked, what still needs user input, what could not be checked, and simple next steps. Advanced/manual platform checks remain available but visually de-emphasized. The app stays local web-based for UI consistency across platforms, while the backend remains responsible for platform-specific checks.
 
-This direction is documented in [Product Direction](product-direction.md). It does not add active scanning or new v0.1.0 product scope.
+Follow-up dashboard work is documented in [Product Direction](product-direction.md). This direction does not add active scanning or new v0.1.0 product scope.
 
 ## Evidence Source Labels
 
@@ -131,7 +132,7 @@ Current labels include:
 - `questionnaire`: Questionnaire
 - `local_device` and local check evidence: Local Device Check
 - `demo`: Demo Data
-- `unsupported_platform`: Unsupported Platform
+- `unsupported_platform`: Could Not Check
 - `runtime_context`: Runtime Context
 - `manual_inventory`: Manual Device Inventory
 - `demo_inventory`: Demo Device Inventory
@@ -143,7 +144,12 @@ The backend evidence sources remain deterministic and privacy-safe. The frontend
 
 The React app keeps questionnaire answers, selected combined-report options, device inventory entries, current reports, and export status in memory only. It does not use `localStorage`, IndexedDB, cookies, a database, or telemetry for answers, reports, inventory entries, exports, scan data, or secrets. Refreshing the browser clears in-memory answers and reports.
 
-The only browser storage used by v0.1.0 is `sessionStorage` key `ai-homeguard-safety-ack-v0.1.0`, which stores a versioned safety acknowledgement for the current browser session. It prevents repeated safety acknowledgement prompts during normal navigation and does not contain questionnaire answers, report content, device inventory entries, IP/MAC data, hostnames, router information, exports, secrets, or telemetry IDs.
+The only browser storage used by v0.1.0 is low-risk session UI state:
+
+- `ai-homeguard-safety-ack-v0.1.0`: versioned safety acknowledgement for the current browser session
+- `ai-homeguard-advanced-options-open-v0.1.0`: whether the Advanced Options drawer is open
+
+These keys prevent repeated safety prompts and preserve the Advanced Options drawer state during normal navigation. They do not contain questionnaire answers, report content, device inventory entries, IP/MAC data, hostnames, router information, exports, secrets, or telemetry IDs.
 
 Exports are created only when the user clicks Export Markdown or Export JSON. Export generation posts the current in-memory `HomeGuardReport` to the local backend export endpoint and downloads the returned content in the browser. The frontend does not auto-save exports.
 
@@ -194,7 +200,7 @@ The guardrails classify RFC1918 IPv4 ranges, loopback, link-local, public IPs, I
 
 The passive context service may read local route and neighbor-cache information through allowlisted read-only commands such as `route -n get default`, `netstat -rn`, `arp -a`, `ip route`, `ip neigh show`, `ipconfig`, and `route print`. These commands are used only for local passive context; they do not send discovery packets, scan ports, run Nmap, capture packets, log in to routers, or test credentials. User-facing output summarizes counts and private-context presence, not full MAC addresses or hostnames.
 
-In Docker, network context may describe the container network rather than the host or home network. Slice 13 - Safe Private Network Discovery is a deferred follow-up for a future version with explicit authorization, private IPv4 ranges only, no public targets, user-controlled safe discovery, no credential testing, no exploit logic, no packet capture, no router login, clear cancel/timeout behavior, and transparent results. It is not part of v0.1.0.
+In Docker, network context may describe the container network rather than the host or home network. Safe private network discovery is a deferred follow-up for a future version with explicit authorization, private IPv4 ranges only, no public targets, user-controlled safe discovery, no credential testing, no exploit logic, no packet capture, no router login, clear cancel/timeout behavior, and transparent results. It is not part of v0.1.0.
 
 ## Device Inventory and Router Guidance Foundation
 

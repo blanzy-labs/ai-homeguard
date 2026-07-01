@@ -1,5 +1,5 @@
 import type { HomeGuardReport } from "../api/client";
-import { ReportReviewPanel } from "./ReportReviewPanel";
+import { HomeGuardDashboard } from "./HomeGuardDashboard";
 
 type DemoDashboardProps = {
   report: HomeGuardReport;
@@ -19,12 +19,12 @@ export function DemoDashboard({
   onClearReport,
 }: DemoDashboardProps) {
   return (
-    <ReportReviewPanel
+    <HomeGuardDashboard
       report={report}
       kicker="Demo dashboard"
-      heading="Sample HomeGuard Report"
-      scoreLabel="sample score"
-      findingsHeading="Sample Findings"
+      heading="Sample HomeGuard Dashboard"
+      description="Demo data shows how the dashboard works. No checks were run."
+      demoMode
       exportStatus={exportStatus}
       onExportMarkdown={onExportMarkdown}
       onExportJson={onExportJson}

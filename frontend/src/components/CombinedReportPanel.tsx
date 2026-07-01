@@ -1,5 +1,5 @@
 import type { CombinedReportResponse, HomeGuardReport } from "../api/client";
-import { ReportReviewPanel } from "./ReportReviewPanel";
+import { HomeGuardDashboard } from "./HomeGuardDashboard";
 
 type CombinedReportPanelProps = {
   response: CombinedReportResponse;
@@ -21,11 +21,11 @@ export function CombinedReportPanel({
   const report = response.report;
 
   return (
-    <ReportReviewPanel
+    <HomeGuardDashboard
       report={report}
       kicker="Full HomeGuard Report"
-      heading="Combined HomeGuard Report"
-      scoreLabel="review score"
+      heading="HomeGuard Dashboard"
+      description="Your local HomeGuard check is summarized below with plain-English next steps."
       limitations={response.limitations}
       exportStatus={exportStatus}
       onExportMarkdown={onExportMarkdown}

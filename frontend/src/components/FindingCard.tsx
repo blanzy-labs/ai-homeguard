@@ -57,11 +57,11 @@ export function FindingCard({ finding }: FindingCardProps) {
       </div>
 
       <details className="technical-details">
-        <summary>Technical details and evidence</summary>
+        <summary>More Detail</summary>
         <div className="detail-stack">
           {finding.technical_title ? (
             <section>
-              <h4>Technical title</h4>
+              <h4>Detailed title</h4>
               <p className="muted">{finding.technical_title}</p>
             </section>
           ) : null}

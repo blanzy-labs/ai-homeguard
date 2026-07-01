@@ -16,7 +16,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 ## Documentation
 
 - [x] README finalized for v0.1.0
-- [x] Product direction documented for Slice 13 dashboard-first follow-up
+- [x] Slice 13 dashboard-first product direction implemented and documented
 - [x] Disclaimer complete
 - [x] Security and privacy notes complete
 - [x] Architecture notes complete
@@ -35,6 +35,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] Docker build passes
 - [x] Docker smoke checks pass
 - [x] Endpoint smoke checks pass
+- [x] Dashboard-first smoke items documented in `docs/validation/slice-13-validation.md`
 - [ ] Manual UI smoke check complete - owner manual smoke found release-blocking issues; Slice 12A fixes require owner retest
 - [x] Release checklist result recorded in validation document
 
@@ -55,7 +56,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] No OpenAI/API provider calls
 - [x] No telemetry
 - [x] No database/report/questionnaire/inventory persistence
-- [x] Browser storage limited to versioned safety acknowledgement only
+- [x] Browser storage limited to versioned safety acknowledgement and low-risk Advanced Options drawer state only
 - [x] No report auto-save to disk
 - [x] No remediation/settings changes
 - [x] No sudo/admin requirement for baseline behavior
@@ -82,6 +83,7 @@ Release target: v0.1.0 - Local Home Security Audit MVP
 - [x] Manual/demo device inventory helper included
 - [x] Router guidance included
 - [x] Report review experience included
+- [x] Dashboard-first Run HomeGuard Check experience included
 
 ## GitHub Release
 

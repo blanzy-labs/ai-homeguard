@@ -10,6 +10,7 @@ Release: v0.1.0 - Local Home Security Audit MVP
 
 AI HomeGuard helps home users review common security basics in a calm, local-first workflow:
 
+- Dashboard-first Run HomeGuard Check flow with overall status, top actions, coverage, and export
 - Demo Mode with fake sample findings
 - Safety-first guided UX and authorization acknowledgements
 - Home security questionnaire
@@ -24,7 +25,7 @@ AI HomeGuard helps home users review common security basics in a calm, local-fir
 - Passive local network awareness foundation
 - Manual/demo device inventory helper
 - Generic router guidance
-- Report review experience with top actions, findings, filters, evidence source labels, limitations, safety notes, and export controls
+- Report review experience with top actions, grouped findings, evidence source labels, limitations, safety notes, and export controls
 
 ## Safety Boundaries
 
@@ -52,7 +53,7 @@ v0.1.0 does not include:
 
 Reports and exports may include questionnaire answers, manual inventory labels, and local audit evidence. Review exports before sharing.
 
-The frontend may store only a versioned safety acknowledgement in `sessionStorage` for the current browser session so users do not have to accept the same safety terms repeatedly. It does not store questionnaire answers, reports, device inventory entries, secrets, exports, or telemetry.
+The frontend may store only low-risk UI state in `sessionStorage` for the current browser session: a versioned safety acknowledgement and whether the Advanced Options drawer is open. It does not store questionnaire answers, reports, device inventory entries, secrets, exports, or telemetry.
 
 ## Limitations
 
@@ -60,22 +61,22 @@ AI HomeGuard v0.1.0 is not a penetration test, compliance tool, security certifi
 
 Checks are best-effort and platform-dependent. Windows, macOS, and Linux checks only run on matching operating systems. Docker may reflect the Linux container environment rather than the host computer. If Docker is running on a Mac, the backend may correctly report a Linux container runtime; for true host-level macOS checks, run the backend natively with `uv`. Windows and Linux behavior is covered by mocked validation in this development environment and should be further validated on native systems.
 
-Passive network awareness may be incomplete. Manual device inventory depends on user-provided or router app information. v0.1.0 does not actively discover devices on the network. Slice 13 - Safe Private Network Discovery is deferred for a future version with explicit authorization, private-network-only guardrails, user control, timeouts, transparent results, no credential testing, no exploit logic, no packet capture, and no router login. D3FEND-informed guidance is educational and does not represent official D3FEND certification or full D3FEND coverage.
+Passive network awareness may be incomplete. Manual device inventory depends on user-provided or router app information. v0.1.0 does not actively discover devices on the network. Safe private network discovery is deferred for a future version with explicit authorization, private-network-only guardrails, user control, timeouts, transparent results, no credential testing, no exploit logic, no packet capture, and no router login. D3FEND-informed guidance is educational and does not represent official D3FEND certification or full D3FEND coverage.
 
 See [docs/disclaimer.md](docs/disclaimer.md) and [docs/security-and-privacy.md](docs/security-and-privacy.md).
 
 ## Recommended App Flow
 
-The recommended path is Full HomeGuard Report:
+The recommended path is Run HomeGuard Check:
 
-1. Start the guided flow.
+1. Click Run HomeGuard Check from the home page.
 2. Review the safety boundaries.
-3. Answer the Home Security Questionnaire.
-4. Optionally include read-only local checks, passive network awareness, and manual/demo inventory findings.
-5. Review top actions, findings, evidence source labels, limitations, and D3FEND-informed guidance.
+3. Keep the guided defaults, or choose optional Router & Wi-Fi awareness and manual/demo device inventory.
+4. Answer quick home security questions, or skip them and run the selected local checks.
+5. Review the HomeGuard Dashboard: overall status, top actions, what was checked, what still needs input, what could not be checked, grouped findings, limitations, and D3FEND-informed guidance.
 6. Export Markdown or JSON only when you choose to.
 
-Secondary paths remain available for Demo Mode, Local Device Audit, Home Security Questionnaire, Local Network Awareness, Device Inventory Helper, and Defensive Guidance Catalog.
+Secondary paths remain available under Advanced Options for Demo Mode, Local Device Audit, Questionnaire Only, Local Network Awareness, Device Inventory Helper, and Defensive Guidance Catalog.
 
 Advanced/manual routes remain available for Windows Device Audit, macOS Device Audit, and Linux Device Audit.
 

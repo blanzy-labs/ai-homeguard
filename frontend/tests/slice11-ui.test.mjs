@@ -28,31 +28,48 @@ function readAllSource() {
     .join("\n");
 }
 
-test("mode navigation keeps recommended, secondary, and advanced paths visible", () => {
+test("home page presents a dashboard-first guided path and de-emphasized advanced options", () => {
   const app = read("src/App.tsx");
+  const dashboard = read("src/components/HomeGuardDashboard.tsx");
+  const source = app + dashboard;
   const css = read("src/styles/app.css");
 
   [
-    "Full HomeGuard Report",
+    "Start with one guided check",
+    "Run HomeGuard Check",
+    "Try Demo",
+    "View Last Result in This Session",
+    "Advanced Options",
+    "What HomeGuard checked",
+    "Device checks",
+    "Questionnaire answers",
+    "Passive network awareness",
+    "Device inventory",
+    "Router guidance",
+    "Not available on this platform",
+    "Dashboard / Export",
     "Demo Mode",
-    "All Modes",
     "Local Device Audit",
-    "Home Security Questionnaire",
+    "Questionnaire Only",
     "Device Inventory Helper",
     "Local Network Awareness",
     "Windows Device Audit",
     "macOS Device Audit",
     "Linux Device Audit",
-    "Report Review / Export",
     "Advanced Checks",
-  ].forEach((label) => assert.match(app, new RegExp(label)));
+  ].forEach((label) => assert.match(source, new RegExp(label)));
 
   assert.match(app, /status="Recommended"/);
   assert.match(app, /mode-group--recommended/);
   assert.match(app, /mode-group--advanced/);
   assert.match(app, /variant="advanced"/);
+  assert.match(app, /advancedOptionsStorageKey/);
+  assert.match(app, /guided-setup/);
   assert.match(app, /PrimaryNavigation/);
   assert.match(app, /openNavigationTarget/);
+  assert.match(css, /\.home-cta-panel/);
+  assert.match(css, /\.advanced-options-drawer/);
+  assert.match(css, /\.guided-setup-panel/);
   assert.match(css, /\.mode-card--advanced/);
   assert.match(css, /\.primary-nav/);
   assert.match(css, /\.nav-button--active/);
@@ -137,14 +154,15 @@ test("finding cards show source badges, guidance labels, and collapsed technical
   const guidance = read("src/components/DefensiveGuidancePanel.tsx");
 
   assert.match(findingCard, /EvidenceSourceBadge/);
-  assert.match(findingCard, /Technical details and evidence/);
+  assert.match(findingCard, /More Detail/);
+  assert.match(findingCard, /Detailed title/);
   assert.match(guidance, /D3FEND-informed guidance is educational and does not guarantee protection\./);
 
   [
     "Questionnaire",
     "Local Device Check",
     "Demo Data",
-    "Unsupported Platform",
+    "Could Not Check",
     "Runtime Context",
     "Manual Device Inventory",
     "Demo Device Inventory",
@@ -156,11 +174,10 @@ test("required safety and privacy copy remains visible", () => {
   const source = readAllSource();
 
   [
-    "Read-only local checks.",
+    "Read-only checks only.",
     "No settings are changed.",
-    "No network scan is run.",
-    "No data is uploaded.",
-    "No router login is performed.",
+    "No public scanning, router login, packet capture, or automatic changes.",
+    "No data upload, telemetry, database, or AI provider call.",
     "Do not enter router passwords.",
     "Review exports before sharing.",
     "Backend connected",

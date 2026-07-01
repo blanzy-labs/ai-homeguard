@@ -41,6 +41,7 @@ type FlowStep =
   | "welcome"
   | "safety"
   | "mode"
+  | "guided-setup"
   | "questionnaire"
   | "results"
   | "full-questionnaire"
@@ -57,16 +58,16 @@ type FlowStep =
 
 type NavigationTarget =
   | "welcome"
-  | "mode"
-  | "demo"
+  | "run-check"
   | "full-report"
+  | "advanced"
+  | "review"
+  | "demo"
   | "local"
   | "questionnaire"
   | "network"
   | "inventory"
-  | "guidance"
-  | "advanced"
-  | "review";
+  | "guidance";
 
 type ReportState =
   | { state: "idle" }
@@ -111,6 +112,7 @@ const nativeMacInstruction = "For host-level macOS checks, run the backend nativ
 
 const safetyAcknowledgementVersion = "0.1.0";
 const safetyAcknowledgementStorageKey = "ai-homeguard-safety-ack-v0.1.0";
+const advancedOptionsStorageKey = "ai-homeguard-advanced-options-open-v0.1.0";
 const networkAwarenessStatementVersion = "v0.1.0-network-awareness";
 const demoReportUnavailableMessage =
   "Could not load the demo report. Confirm the backend is running on port 8000.";
@@ -158,6 +160,28 @@ function writeSafetyAcknowledgement(acknowledged: boolean) {
   }
 }
 
+function readAdvancedOptionsExpanded() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    return window.sessionStorage.getItem(advancedOptionsStorageKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeAdvancedOptionsExpanded(expanded: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(advancedOptionsStorageKey, String(expanded));
+  } catch {
+    // Storage can be unavailable in private or locked-down browser sessions.
+  }
+}
+
 type NavigatorWithUserAgentData = Navigator & {
   userAgentData?: {
     platform?: string;
@@ -193,6 +217,7 @@ export default function App() {
   const [flowStep, setFlowStep] = useState<FlowStep>("welcome");
   const [acknowledged, setAcknowledged] = useState(readSafetyAcknowledgement);
   const [pendingNavigation, setPendingNavigation] = useState<NavigationTarget | null>(null);
+  const [advancedOptionsExpanded, setAdvancedOptionsExpanded] = useState(readAdvancedOptionsExpanded);
   const [browserPlatformHint] = useState(getBrowserPlatformHint);
   const [demoReport, setDemoReport] = useState<ReportState>({ state: "idle" });
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireState>({ state: "idle" });
@@ -201,6 +226,7 @@ export default function App() {
   const [questionnaireReport, setQuestionnaireReport] = useState<ReportState>({ state: "idle" });
   const [combinedReport, setCombinedReport] = useState<CombinedReportState>({ state: "idle" });
   const [combinedSubmission, setCombinedSubmission] = useState<QuestionnaireSubmission | null>(null);
+  const [includeQuestionsInCombined, setIncludeQuestionsInCombined] = useState(true);
   const [includeLocalInCombined, setIncludeLocalInCombined] = useState(false);
   const [combinedLocalAcknowledged, setCombinedLocalAcknowledged] = useState(false);
   const [includeNetworkInCombined, setIncludeNetworkInCombined] = useState(false);
@@ -225,6 +251,10 @@ export default function App() {
   useEffect(() => {
     writeSafetyAcknowledgement(acknowledged);
   }, [acknowledged]);
+
+  useEffect(() => {
+    writeAdvancedOptionsExpanded(advancedOptionsExpanded);
+  }, [advancedOptionsExpanded]);
 
   useEffect(() => {
     if (flowStep !== "demo" || demoReport.state !== "idle") {
@@ -294,8 +324,15 @@ export default function App() {
   }
 
   async function openFullReportFlow() {
-    setFlowStep("full-questionnaire");
-    await ensureQuestionnaireLoaded();
+    setIncludeQuestionsInCombined(true);
+    setIncludeLocalInCombined(true);
+    setCombinedLocalAcknowledged(true);
+    setIncludeNetworkInCombined(false);
+    setCombinedNetworkAcknowledged(false);
+    setIncludeDeviceInventoryInCombined(false);
+    setCombinedSubmission(null);
+    setCombinedReport({ state: "idle" });
+    setFlowStep("guided-setup");
   }
 
   async function openLocalAudit() {
@@ -378,11 +415,30 @@ export default function App() {
   function submitFullReportQuestionnaire(submission: QuestionnaireSubmission) {
     setCombinedSubmission(submission);
     setExportStatus(null);
-    setFlowStep("full-options");
+    void buildCombinedReport(submission, true);
   }
 
-  async function buildCombinedReport() {
-    if (!combinedSubmission) {
+  async function continueGuidedSetup() {
+    if (includeQuestionsInCombined) {
+      setFlowStep("full-questionnaire");
+      await ensureQuestionnaireLoaded();
+      return;
+    }
+    setCombinedSubmission(null);
+    await buildCombinedReport(null, false);
+  }
+
+  async function skipQuickQuestions() {
+    setIncludeQuestionsInCombined(false);
+    setCombinedSubmission(null);
+    await buildCombinedReport(null, false);
+  }
+
+  async function buildCombinedReport(
+    questionnaireSubmission: QuestionnaireSubmission | null = combinedSubmission,
+    includeQuestions = includeQuestionsInCombined,
+  ) {
+    if (includeQuestions && !questionnaireSubmission) {
       setCombinedReport({ state: "error", message: "Questionnaire answers are required for the full report." });
       setFlowStep("combined-results");
       return;
@@ -413,11 +469,11 @@ export default function App() {
     setFlowStep("combined-results");
     try {
       const response = await getCombinedReport({
-        include_questionnaire: true,
+        include_questionnaire: includeQuestions,
         include_local_device: includeLocalInCombined,
         include_network_awareness: includeNetworkInCombined,
         include_device_inventory: includeDeviceInventoryInCombined,
-        questionnaire_submission: combinedSubmission,
+        questionnaire_submission: includeQuestions ? questionnaireSubmission : null,
         acknowledged_authorization: includeLocalInCombined ? combinedLocalAcknowledged : false,
         network_authorization: includeNetworkInCombined
           ? {
@@ -617,7 +673,8 @@ export default function App() {
     setQuestionnaireAnswers({});
     setFullReportAnswers({});
     setCombinedSubmission(null);
-    setIncludeLocalInCombined(false);
+    setIncludeQuestionsInCombined(true);
+    setIncludeLocalInCombined(true);
     setCombinedLocalAcknowledged(false);
     setIncludeNetworkInCombined(false);
     setCombinedNetworkAcknowledged(false);
@@ -677,16 +734,17 @@ export default function App() {
       setFlowStep("welcome");
       return;
     }
-    if (target === "mode" || target === "advanced") {
+    if (target === "run-check" || target === "full-report") {
+      await openFullReportFlow();
+      return;
+    }
+    if (target === "advanced") {
+      setAdvancedOptionsExpanded(true);
       setFlowStep("mode");
       return;
     }
     if (target === "demo") {
       setFlowStep("demo");
-      return;
-    }
-    if (target === "full-report") {
-      await openFullReportFlow();
       return;
     }
     if (target === "local") {
@@ -733,7 +791,7 @@ export default function App() {
     if (!acknowledged) {
       return;
     }
-    const target = pendingNavigation ?? "mode";
+    const target = pendingNavigation ?? "run-check";
     setPendingNavigation(null);
     void openNavigationTarget(target);
   }
@@ -750,44 +808,109 @@ export default function App() {
           </div>
         </div>
         <h1>AI HomeGuard</h1>
-        <p className="subtitle">Local Home Security Audit MVP</p>
+        <p className="subtitle">A local home cyber hygiene check with plain-English next steps.</p>
         <p className="safety-message">
-          A defensive home cyber hygiene helper for local review, evidence labels, export controls,
-          and calm safety copy without adding new checks or persistence.
+          AI HomeGuard checks what it can locally, asks a few simple questions, and gives you a
+          short action plan without uploading data or changing settings.
         </p>
         <span className="demo-badge">Safety-first local flow</span>
       </section>
 
-      <PrimaryNavigation
-        activeTarget={activeNavigationTarget(flowStep)}
-        reportAvailable={currentReportTarget() !== null}
-        onNavigate={navigateTo}
-        onStartOver={startOver}
-        onClearCurrentReport={clearCurrentReport}
-      />
-
-      <StatusPanel />
+      {flowStep !== "welcome" ? (
+        <PrimaryNavigation
+          activeTarget={activeNavigationTarget(flowStep)}
+          reportAvailable={currentReportTarget() !== null}
+          onNavigate={navigateTo}
+          onStartOver={startOver}
+          onClearCurrentReport={clearCurrentReport}
+        />
+      ) : null}
 
       {flowStep === "welcome" && (
-        <section className="welcome-panel" aria-labelledby="welcome-heading">
-          <div>
-            <p className="section-kicker">Welcome</p>
-            <h2 id="welcome-heading">A calm checklist for home security basics</h2>
-            <p className="muted">
-              AI HomeGuard explains defensive steps in plain language and keeps this version limited
-              to local read-only checks, runtime context, demo data, questionnaire answers, and
-              user-triggered report exports.
-            </p>
-          </div>
-          <div className="welcome-actions">
-            <button className="primary-button" type="button" onClick={() => navigateTo("mode")}>
-              Start Guided Flow
-            </button>
-            <button className="secondary-button" type="button" onClick={() => navigateTo("demo")}>
-              Open Demo Dashboard
-            </button>
-          </div>
-        </section>
+        <div className="home-stack">
+          <section className="home-cta-panel" aria-labelledby="welcome-heading">
+            <div>
+              <p className="section-kicker">HomeGuard check</p>
+              <h2 id="welcome-heading">Start with one guided check</h2>
+              <p className="muted">
+                Run HomeGuard Check gives you a dashboard, the top things to do first, what was
+                checked, what still needs your input, and a report you can export when you choose.
+              </p>
+            </div>
+            <div className="welcome-actions">
+              <button className="primary-button primary-button--large" type="button" onClick={() => navigateTo("run-check")}>
+                Run HomeGuard Check
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("demo")}>
+                Try Demo
+              </button>
+              {currentReportTarget() ? (
+                <button className="secondary-button" type="button" onClick={() => navigateTo("review")}>
+                  View Last Result in This Session
+                </button>
+              ) : null}
+              <button className="secondary-button" type="button" onClick={() => navigateTo("advanced")}>
+                Advanced Options
+              </button>
+            </div>
+          </section>
+
+          <section className="home-info-panel" aria-labelledby="what-it-checks-heading">
+            <div>
+              <p className="section-kicker">What it checks</p>
+              <h2 id="what-it-checks-heading">Plain-English coverage</h2>
+            </div>
+            <div className="home-check-grid">
+              {["This Device", "Accounts & Passwords", "Backups", "Router & Wi-Fi", "Smart Devices", "Network Awareness"].map(
+                (label) => (
+                  <span key={label}>{label}</span>
+                ),
+              )}
+            </div>
+          </section>
+
+          <section className="home-info-panel" aria-labelledby="trust-heading">
+            <div>
+              <p className="section-kicker">Trust boundaries</p>
+              <h2 id="trust-heading">What it does not do</h2>
+            </div>
+            <div className="home-trust-grid">
+              {["No hacking", "No public scanning", "No router login", "No data upload", "No automatic changes"].map(
+                (label) => (
+                  <span key={label}>{label}</span>
+                ),
+              )}
+            </div>
+          </section>
+
+          <details
+            className="advanced-options-drawer"
+            open={advancedOptionsExpanded}
+            onToggle={(event) => setAdvancedOptionsExpanded(event.currentTarget.open)}
+          >
+            <summary>Advanced Options</summary>
+            <div className="advanced-options-list">
+              <button className="secondary-button" type="button" onClick={() => navigateTo("demo")}>
+                Demo Mode
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("local")}>
+                Local Device Audit
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("questionnaire")}>
+                Questionnaire Only
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("network")}>
+                Local Network Awareness
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("inventory")}>
+                Device Inventory Helper
+              </button>
+              <button className="secondary-button" type="button" onClick={() => navigateTo("advanced")}>
+                Platform-Specific Checks
+              </button>
+            </div>
+          </details>
+        </div>
       )}
 
       {flowStep === "safety" && (
@@ -796,30 +919,18 @@ export default function App() {
             <p className="section-kicker">Safety notes</p>
             <h2 id="safety-flow-heading">What this version does and does not do</h2>
             <p className="muted">
-              The goal is transparency first: you should always know when the app is using sample
-              data, questionnaire answers, manual inventory, passive network context, or read-only
-              local checks.
+              HomeGuard is a defensive local helper. It explains what it can check, what it cannot
+              check, and what you may want to do next.
             </p>
           </div>
 
           <ul className="safety-boundary-list">
-            <li>Runs locally in your development environment.</li>
-            <li>Auto-detects Windows, macOS, Linux, or unsupported runtimes.</li>
-            <li>Read-only local checks.</li>
+            <li>Read-only checks only.</li>
             <li>No settings are changed.</li>
-            <li>Returns an unsupported-platform report when a check cannot run here.</li>
-            <li>If running in Docker, results may reflect the container rather than the host.</li>
-            <li>Does not request sudo, administrator escalation, or passwords.</li>
-            <li>Does not exploit, attack, brute-force, or packet-sniff.</li>
-            <li>Does not scan networks or public targets.</li>
-            <li>Network awareness uses passive local context only after explicit authorization.</li>
-            <li>Network awareness does not run active discovery, port scans, or packet capture.</li>
-            <li>Device inventory is manual/demo only and does not discover devices automatically.</li>
-            <li>Device inventory does not ask for router credentials, IP addresses, MAC addresses, or hostnames.</li>
-            <li>Does not upload data or call an AI provider.</li>
-            <li>Does not save reports automatically.</li>
-            <li>Exports are created only when you click an export button.</li>
-            <li>Questionnaire answers stay in this browser session and are not uploaded.</li>
+            <li>No public scanning, router login, packet capture, or automatic changes.</li>
+            <li>No data upload, telemetry, database, or AI provider call.</li>
+            <li>Exports happen only when you click an export button.</li>
+            <li>If Docker limits visibility, the dashboard shows that as a limitation.</li>
           </ul>
 
           <label className="acknowledgement">
@@ -857,28 +968,150 @@ export default function App() {
         </section>
       )}
 
+      {flowStep === "guided-setup" && (
+        <section className="questionnaire-panel guided-setup-panel" aria-labelledby="guided-setup-heading">
+          <div className="flow-heading">
+            <p className="section-kicker">Run HomeGuard Check</p>
+            <h2 id="guided-setup-heading">Choose what to include</h2>
+            <p className="muted">
+              HomeGuard will combine what it can check locally with a few simple answers. You can
+              keep the defaults and run a useful check without choosing technical tools.
+            </p>
+          </div>
+
+          <div className="guided-option-list">
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={includeLocalInCombined}
+                onChange={(event) => {
+                  setIncludeLocalInCombined(event.target.checked);
+                  setCombinedLocalAcknowledged(event.target.checked);
+                }}
+              />
+              <span>
+                <strong>Include This Device</strong>
+                <br />
+                Read-only checks when available. If Docker limits visibility, the dashboard will
+                show that as a limitation.
+              </span>
+            </label>
+
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={includeQuestionsInCombined}
+                onChange={(event) => setIncludeQuestionsInCombined(event.target.checked)}
+              />
+              <span>
+                <strong>Include quick home security questions</strong>
+                <br />
+                A few plain questions fill in areas HomeGuard cannot check automatically.
+              </span>
+            </label>
+
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={includeNetworkInCombined}
+                onChange={(event) => {
+                  setIncludeNetworkInCombined(event.target.checked);
+                  if (!event.target.checked) {
+                    setCombinedNetworkAcknowledged(false);
+                  }
+                }}
+              />
+              <span>
+                <strong>Include Router & Wi-Fi awareness</strong>
+                <br />
+                Optional passive local context only. No active discovery, port scanning, packet
+                capture, router login, or public target scanning.
+              </span>
+            </label>
+
+            {includeNetworkInCombined ? (
+              <label className="acknowledgement">
+                <input
+                  type="checkbox"
+                  checked={combinedNetworkAcknowledged}
+                  onChange={(event) => setCombinedNetworkAcknowledged(event.target.checked)}
+                />
+                <span>
+                  I confirm this is my own home network or a network I am authorized to assess. I
+                  understand HomeGuard uses passive local context only.
+                </span>
+              </label>
+            ) : null}
+
+            <label className="acknowledgement">
+              <input
+                type="checkbox"
+                checked={includeDeviceInventoryInCombined}
+                onChange={(event) => setIncludeDeviceInventoryInCombined(event.target.checked)}
+              />
+              <span>
+                <strong>Include Smart Devices from manual/router list</strong>
+                <br />
+                Optional. Use this only after adding devices in Device Inventory Helper.
+              </span>
+            </label>
+
+            {includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0 ? (
+              <div className="guided-warning">
+                <strong>Device inventory needs your input</strong>
+                <p>Add devices or load demo inventory before including this area.</p>
+                <button className="secondary-button" type="button" onClick={() => void openDeviceInventory()}>
+                  Open Device Inventory Helper
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flow-actions">
+            <button className="secondary-button" type="button" onClick={() => setFlowStep("welcome")}>
+              Back
+            </button>
+            <button
+              className="primary-button"
+              type="button"
+              disabled={
+                (includeNetworkInCombined && !combinedNetworkAcknowledged) ||
+                (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0) ||
+                (!includeQuestionsInCombined &&
+                  !includeLocalInCombined &&
+                  !includeNetworkInCombined &&
+                  !includeDeviceInventoryInCombined)
+              }
+              onClick={continueGuidedSetup}
+            >
+              {includeQuestionsInCombined ? "Answer Quick Questions" : "Run Check"}
+            </button>
+          </div>
+        </section>
+      )}
+
       {flowStep === "mode" && (
         <section className="mode-panel" aria-labelledby="mode-heading">
           <div className="flow-heading">
-            <p className="section-kicker">Choose mode</p>
-            <h2 id="mode-heading">Pick what you want to explore</h2>
+            <p className="section-kicker">Advanced Options</p>
+            <h2 id="mode-heading">Tools for deeper review</h2>
             <p className="muted">
-              Full HomeGuard Report is the recommended path. Read-only local checks. No settings are
-              changed. No network scan is run. No data is uploaded.
+              The main path is Run HomeGuard Check. These options remain available when you want to
+              review one area at a time or validate platform-specific checks.
             </p>
           </div>
           <div className="mode-sections">
             <section className="mode-group mode-group--recommended" aria-labelledby="recommended-mode-heading">
               <div className="mode-group__header">
-                <p className="section-kicker">Recommended path</p>
-                <h3 id="recommended-mode-heading">Start with the full report</h3>
+                <p className="section-kicker">Recommended</p>
+                <h3 id="recommended-mode-heading">Return to the guided check</h3>
               </div>
               <div className="mode-grid mode-grid--single">
                 <ModeCard
-                  title="Full HomeGuard Report"
+                  title="Run HomeGuard Check"
                   status="Recommended"
                   variant="recommended"
-                  description="Answer the home security questionnaire, then optionally include read-only local checks, passive network awareness, and manual/demo inventory findings."
+                  description="Use one guided flow to create a dashboard, top actions, coverage summary, and exportable report."
                   onSelect={openFullReportFlow}
                 />
               </div>
@@ -886,8 +1119,8 @@ export default function App() {
 
             <section className="mode-group" aria-labelledby="secondary-mode-heading">
               <div className="mode-group__header">
-                <p className="section-kicker">Secondary paths</p>
-                <h3 id="secondary-mode-heading">Explore one source at a time</h3>
+                <p className="section-kicker">Secondary tools</p>
+                <h3 id="secondary-mode-heading">Review one area at a time</h3>
               </div>
               <div className="mode-grid">
                 <ModeCard
@@ -1070,10 +1303,12 @@ export default function App() {
           sections={questionnaire.sections}
           answers={fullReportAnswers}
           isSubmitting={false}
-          kicker="Full HomeGuard Report"
-          heading="Start with the home security questionnaire"
-          description="These answers create questionnaire findings for the combined report. No passwords, addresses, account names, device identifiers, or Wi-Fi join codes are requested."
-          submitLabel="Continue to Local Audit Options"
+          kicker="Run HomeGuard Check"
+          heading="Answer a few quick questions"
+          description="Answer a few quick questions so HomeGuard can fill in what it cannot check automatically. You can skip this and still run selected local checks."
+          submitLabel="Run Check"
+          skipLabel="Skip Questions and Run Check"
+          onSkip={skipQuickQuestions}
           onAnswerChange={(questionId, value) =>
             setFullReportAnswers((current) => ({ ...current, [questionId]: value }))
           }
@@ -1175,7 +1410,7 @@ export default function App() {
                 (includeNetworkInCombined && !combinedNetworkAcknowledged) ||
                 (includeDeviceInventoryInCombined && deviceInventorySubmission.devices.length === 0)
               }
-              onClick={buildCombinedReport}
+              onClick={() => void buildCombinedReport()}
             >
               Build Combined Report
             </button>
@@ -1373,37 +1608,36 @@ export default function App() {
           onClearReport={clearCurrentReport}
         />
       )}
+
+      <StatusPanel />
     </main>
   );
 }
 
 function activeNavigationTarget(flowStep: FlowStep): NavigationTarget {
-  if (flowStep === "demo") {
-    return "demo";
+  if (flowStep === "combined-results" || flowStep === "demo" || flowStep === "results") {
+    return "review";
   }
-  if (flowStep === "full-questionnaire" || flowStep === "full-options" || flowStep === "combined-results") {
-    return "full-report";
+  if (flowStep === "guided-setup" || flowStep === "full-questionnaire" || flowStep === "full-options") {
+    return "run-check";
   }
   if (flowStep === "local") {
-    return "local";
-  }
-  if (flowStep === "questionnaire" || flowStep === "results") {
-    return "questionnaire";
-  }
-  if (flowStep === "network") {
-    return "network";
-  }
-  if (flowStep === "inventory") {
-    return "inventory";
-  }
-  if (flowStep === "guidance") {
-    return "guidance";
-  }
-  if (flowStep === "windows" || flowStep === "macos" || flowStep === "linux") {
     return "advanced";
   }
-  if (flowStep === "mode") {
-    return "mode";
+  if (flowStep === "questionnaire") {
+    return "advanced";
+  }
+  if (flowStep === "network") {
+    return "advanced";
+  }
+  if (flowStep === "inventory") {
+    return "advanced";
+  }
+  if (flowStep === "guidance") {
+    return "advanced";
+  }
+  if (flowStep === "windows" || flowStep === "macos" || flowStep === "linux" || flowStep === "mode") {
+    return "advanced";
   }
   return "welcome";
 }
@@ -1423,14 +1657,8 @@ function PrimaryNavigation({
 }) {
   const items: Array<{ target: NavigationTarget; label: string; disabled?: boolean }> = [
     { target: "welcome", label: "Home" },
-    { target: "mode", label: "All Modes" },
-    { target: "demo", label: "Demo Mode" },
-    { target: "full-report", label: "Full HomeGuard Report" },
-    { target: "local", label: "Local Device Audit" },
-    { target: "questionnaire", label: "Questionnaire" },
-    { target: "network", label: "Local Network Awareness" },
-    { target: "inventory", label: "Device Inventory Helper" },
-    { target: "review", label: "Report Review / Export", disabled: !reportAvailable },
+    { target: "run-check", label: "Run Check" },
+    { target: "review", label: "Dashboard / Export", disabled: !reportAvailable },
     { target: "advanced", label: "Advanced Checks" },
   ];
 

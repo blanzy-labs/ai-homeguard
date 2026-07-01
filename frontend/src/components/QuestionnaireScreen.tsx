@@ -11,6 +11,8 @@ type QuestionnaireScreenProps = {
   description?: string;
   submitLabel?: string;
   submittingLabel?: string;
+  skipLabel?: string;
+  onSkip?: () => void;
 };
 
 export function QuestionnaireScreen({
@@ -24,6 +26,8 @@ export function QuestionnaireScreen({
   description = "Answer what you can. Optional questions can be skipped, and no passwords, addresses, account names, device identifiers, or Wi-Fi join codes are requested.",
   submitLabel = "View Questionnaire Results",
   submittingLabel = "Building Report",
+  skipLabel = "Skip for Now",
+  onSkip,
 }: QuestionnaireScreenProps) {
   const questions = sections.flatMap((section) => section.questions);
   const answeredCount = questions.filter((question) => answers[question.id]).length;
@@ -97,6 +101,11 @@ export function QuestionnaireScreen({
         <p className="muted">
           These answers are used only to create questionnaire-based findings in this browser session.
         </p>
+        {onSkip ? (
+          <button className="secondary-button" type="button" disabled={isSubmitting} onClick={onSkip}>
+            {skipLabel}
+          </button>
+        ) : null}
         <button
           className="primary-button"
           type="button"
